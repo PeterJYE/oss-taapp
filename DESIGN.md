@@ -4,7 +4,7 @@ This document explains the architecture and design of the service-based componen
 
 ## Architecture overview
 
-- Goal: turn the library-based Gmail implementation into a network service so multiple programs can share a single, long-running connection to the mail provider. ##(CREATE A SERVICE)
+- Goal: turn the library-based Gmail implementation into a network service so multiple programs can share a single, long-running connection to the mail provider. 
 - Three new bridges added:
   - FastAPI service (backend) — `src/mail_client_service/src/main.py`
   - Auto-generated HTTP client — `src/generated_client/mail_client_service_client`, script that grabs openAPI spec from fastAPI service to autogenerate client (WIP)
@@ -33,16 +33,34 @@ callers swap in the adapter instead of the concrete Gmail library and call the s
 
 Example: consumer code calls `client.get_message('m123')` where `client` is a `ServiceClientAdapter` instance.
 
-1. Consumer calls `ServiceClientAdapter.get_message('m123')`.
-2. The adapter uses the generated client and receives a JSON response parsed into `MessageDetail` model.
-3. Adapter wraps the returned model in `ServiceMessage` and returns it to the caller.
-4. An HTTP GET request is sent to the FastAPI service endpoint `GET /messages/{message_id}`.
-5. FastAPI's `get_message_detail` endpoint uses the dependency `get_client_dep()` to obtain an instance of gmail client
-6. The service calls `gmail_client_impl.GmailClient.get_message(message_id)` and returns the result as JSON.
-7. The adapter returns the wrapped `ServiceMessage` to the original caller.
+1. The consumer calls `ServiceClientAdapter.get_message('m123')`.
+2. The adapter uses the auto-generated HTTP client (from `openapi-python-client`) to send a `GET /messages/m123` request to the FastAPI service.
+3. The FastAPI service receives the request and uses its dependency-injected Gmail client (`gmail_client_impl.GmailClient`) to retrieve the requested message.
+4. The Gmail client fetches data from Gmail and returns a message object to the FastAPI endpoint.
+5. The FastAPI service serializes the message into JSON and sends it back in the HTTP response.
+6. The auto-generated client parses that JSON into a `MessageDetail` model.
+7. The adapter wraps this model into a `ServiceMessage` object and returns it to the user code, preserving the original interface.
+   
+Diagram:
 
-Diagram (linear):
-user code → adapter (ServiceClientAdapter) → generated client (HTTP) → FastAPI service (/messages/...) → gmail_client_impl (local) → FastAPI → generated client → adapter → user code
+```code
+User code
+   ↓
+ServiceClientAdapter
+   ↓
+Generated HTTP client (OpenAPI)
+   ↓
+FastAPI service (/messages/...)
+   ↓
+gmail_client_impl.GmailClient
+   ↓
+FastAPI → returns JSON
+   ↓
+Generated client → parses response
+   ↓
+Adapter → wraps and returns to user code
+```
+
 
 ## Sample API responses
 
@@ -108,7 +126,37 @@ Why it's needed:
 
 
 How it works (example):
-<!-- NEHA CAN U DO THIS PLEASE -->
+
+Suppose the code calls:
+
+```code
+client = mail_client_api.get_client()
+messages = list(client.get_messages(max_results=3))
+```
+
+This triggers the following flow:
+
+1. **Adapter intercepts the call**
+   - The `ServiceClientAdapter.get_messages()` method is invoked.
+   - Instead of directly talking to Gmail, it uses the auto-generated HTTP client to call the FastAPI endpoint `/messages?limit=3`.
+
+2. **Generated client sends the HTTP request**
+   - The generated client serializes the request, sends it to the FastAPI service, and waits for the JSON response.
+
+3. **FastAPI service handles the request**
+   - The service receives the request and creates a `gmail_client_impl.GmailClient` instance via the shared dependency function `get_client_dep()`.
+   - It then calls `gmail_client_impl.get_messages(max_results=3)` to fetch messages from Gmail.
+   - The results are serialized into JSON and returned to the HTTP client.
+
+4. **Adapter wraps the response**
+   - The generated client parses the JSON response into Pydantic message models.
+   - The `ServiceClientAdapter` converts these models into `ServiceMessage` objects that comply with the original `mail_client_api.Message` interface.
+   - The method returns this list to the caller.
+
+From the perspective of the caller, the behavior is identical — they simply receive Message objects with the same attributes (id, subject, etc.) as before.
+Under the hood, the data has just traveled through the HTTP service boundary.
+
+This pattern ensures full interface compatibility and allows swapping between local and remote backends without touching any existing client-side code.
 
 ## Testing strategy
 
