@@ -273,7 +273,8 @@ Relative imports are currently not used in this repository.
 
 ❌ Relative imports should also be avoided in scripts like `main.py`, where packages should be imported absolutely.
 
-Testing Strategy
+###Testing Strategy
+
 1.Contributors should view testing as a continuous part of development rather than a final step. Every test should be fast, isolated, repeatable, self-verifying, and timely—running quickly, producing consistent results, and clearly checking correctness. Tests must focus on behaviors instead of internal methods, using the public API to mirror real usage. They should avoid logic or unnecessary details, remaining clear and concise so anyone can understand their purpose. When refactoring or fixing bugs, contributors should add new tests rather than modify existing ones, ensuring the test suite reliably supports ongoing code quality and stability
 
 2. Unit Tests reside inside each component directory, under src/<component>/tests/. These tests target the internal logic of that component—its classes, functions, and behavior in isolation, often via mocks or stubs as needed.
@@ -288,7 +289,8 @@ E2E Tests live under tests/e2e/. These simulate full, realistic user workflows (
 
 4.  The project uses pytest with the pytest-cov plugin to measure how much of the codebase is exercised by tests. The minimum acceptable coverage is set to 85%, which balances thorough testing with development efficiency. To check coverage, contributors can run uv run pytest --cov=src --cov-report=term-missing to view results in the terminal or uv run pytest --cov=src --cov-report=html to generate a detailed HTML report. 
 
-Development tools:
+###Development tools:
+
 1.​​  This project uses a uv workspace to manage all components under one shared environment. Running uv sync installs every dependency defined in the root configuration, and contributors can use commands like uv run pytest or uv run ruff check . to perform common tasks. The root pyproject.toml stores shared settings, dependencies, and tool configurations, while each component’s pyproject.toml lists only what that part of the project needs. This setup keeps the workspace consistent, easy to set up, and modular so contributors can work on different 
 components without conflicts.
 
