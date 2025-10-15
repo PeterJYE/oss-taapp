@@ -275,28 +275,53 @@ Relative imports are currently not used in this repository.
 
 ## Testing Strategy
 
-- 1.Contributors should view testing as a continuous part of development rather than a final step. Every test should be fast, isolated, repeatable, self-verifying, and timely—running quickly, producing consistent results, and clearly checking correctness. Tests must focus on behaviors instead of internal methods, using the public API to mirror real usage. They should avoid logic or unnecessary details, remaining clear and concise so anyone can understand their purpose. When refactoring or fixing bugs, contributors should add new tests rather than modify existing ones, ensuring the test suite reliably supports ongoing code quality and stability
+### 1. General Principles  
+Contributors should view testing as a continuous part of development rather than a final step. Every test should be fast, isolated, repeatable, self-verifying, and timely—running quickly, producing consistent results, and clearly checking correctness.  
+Tests must focus on behaviors instead of internal methods, using the public API to mirror real usage. They should avoid logic or unnecessary details, remaining clear and concise so anyone can understand their purpose.  
+When refactoring or fixing bugs, contributors should add new tests rather than modify existing ones, ensuring the test suite reliably supports ongoing code quality and stability.
 
-- 2. Unit Tests reside inside each component directory, under src/<component>/tests/. These tests target the internal logic of that component—its classes, functions, and behavior in isolation, often via mocks or stubs as needed.
+### 2. Test Organization  
+- **Unit Tests** — Located under each component’s `src/<component>/tests/`. These target internal logic such as classes, functions, and behaviors in isolation, using mocks or stubs as needed.  
+- **Integration Tests** — Found in `tests/integration/`. These validate how multiple components interact (for example, ensuring `gmail_client_impl` and `mail_client_api` cooperate correctly).  
+- **End-to-End (E2E) Tests** — Stored in `tests/e2e/`. These simulate complete user workflows such as authentication, message retrieval, marking messages read/unread, and handling errors with real or mock APIs.
 
+### 3. Abstraction Levels  
+Tests operate across three abstraction levels:  
+- **Unit Tests:** Verify individual components in isolation.  
+- **Integration Tests:** Ensure components interact correctly.  
+- **End-to-End Tests:** Validate full workflows from the user’s perspective to confirm that the entire system works as expected.
 
-Integration Tests are grouped under tests/integration/. These tests validate how two or more components interact (e.g. ensuring the gmail_client_impl and gmail_message_impl work together correctly via their interfaces).
+### 4. Code Coverage  
+The project uses **pytest** with the **pytest-cov** plugin to measure how much of the codebase is covered by tests. The minimum acceptable coverage is **85%**, balancing thoroughness with development efficiency.  
+- To view coverage in the terminal:  
+  ```bash
+  uv run pytest --cov=src --cov-report=term-missing
+- To generate an HTML coverage report:
+  ```bash
+  uv run pytest --cov=src --cov-report=html
+## Development Tools
 
+### 1. Workspace Management  
+This project uses a **uv workspace** to manage all components under one shared environment. Running `uv sync` installs every dependency defined in the root configuration.  
+Contributors can use:  
+- `uv run pytest` → run tests  
+- `uv run ruff check .` → run static analysis  
+- `uv run black .` → format code  
+The root `pyproject.toml` defines shared dependencies, settings, and tool configurations, while each component’s own `pyproject.toml` lists only what that specific part needs. This setup ensures modularity, consistency, and easy environment setup.
 
-E2E Tests live under tests/e2e/. These simulate full, realistic user workflows (e.g. authenticating, fetching messages, marking read/unread, error handling) against real or test API endpoints.
+### 2. Static Analysis and Code Formatting  
+The project uses **Ruff** for static analysis and **Black** for code formatting.  
+- **Ruff** checks for unused imports, style violations, and simple logic issues.  
+- **Black** formats code automatically to a uniform style.  
+To use them:  
+```bash
+uv run ruff check .
+uv run black .
+These tools are integrated with the uv workspace, so no separate installation is required. Consistent formatting and static analysis keep the codebase clean, readable, and reliable.
 
-- 3. The tests in this project operate at three abstraction levels: unit, integration,E2E. Unit tests check individual functions or classes in isolation to verify their correctness without external dependencies. Integration tests focus on how different components interact, ensuring that data and behavior flow correctly between modules. End-to-end tests run through complete workflows from the user’s perspective to confirm the entire system functions as expected. 
+### 3.Documentation Generation
+The project uses MkDocs to generate and serve documentation. All documentation files are stored in the docs/ directory, and MkDocs automatically builds them into a static website. Contributors can preview the documentation locally by running uv run mkdocs serve, which starts a live server on http://localhost:8000. To build the documentation for deployment, use uv run mkdocs build. MkDocs helps keep documentation organized, easy to update, and consistent with the project’s structure.
 
-- 4.  The project uses pytest with the pytest-cov plugin to measure how much of the codebase is exercised by tests. The minimum acceptable coverage is set to 85%, which balances thorough testing with development efficiency. To check coverage, contributors can run uv run pytest --cov=src --cov-report=term-missing to view results in the terminal or uv run pytest --cov=src --cov-report=html to generate a detailed HTML report. 
-
-## Development tools:
-
-- 1.​​  This project uses a uv workspace to manage all components under one shared environment. Running uv sync installs every dependency defined in the root configuration, and contributors can use commands like uv run pytest or uv run ruff check . to perform common tasks. The root pyproject.toml stores shared settings, dependencies, and tool configurations, while each component’s pyproject.toml lists only what that part of the project needs. This setup keeps the workspace consistent, easy to set up, and modular so contributors can work on different 
-components without conflicts.
-
-- 2. The project uses Ruff for static analysis and Black for code formatting to keep the codebase clean and consistent. Ruff checks for issues such as unused imports, style violations, and simple logic errors, while Black automatically formats the code to follow a standard style. To run these checks, contributors can use uv run ruff checks . to analyze the code and uv run black . to format it. These tools are fully integrated with the uv workspace, so no extra installation is needed. Consistent formatting and static analysis help maintain readability, reduce bugs, and make code reviews faster and more reliable.
-
-- 3. The project uses MkDocs to generate and serve documentation. All documentation files are stored in the docs/ directory, and MkDocs automatically builds them into a static website. Contributors can preview the documentation locally by running uv run mkdocs serve, which starts a live server on http://localhost:8000. To build the documentation for deployment, use uv run mkdocs build. MkDocs helps keep documentation organized, easy to update, and consistent with the project’s structure.
-
-- 4.​​The project uses GitHub Actions for continuous integration to automatically check code quality and stability. The CI pipeline runs whenever a contributor opens a pull request or pushes new commits. It includes several jobs: linting and formatting (using Ruff and Black) to ensure code style, testing (with pytest and coverage) to verify functionality, and documentation build checks (with MkDocs) to confirm that documentation compiles correctly. These automated workflows help catch issues early, maintain consistent standards, and ensure that every change merged into the main branch keeps the project stable and reliable.
+### 4. Continuous Integration (CI)
+​​The project uses GitHub Actions for continuous integration to automatically check code quality and stability. The CI pipeline runs whenever a contributor opens a pull request or pushes new commits. It includes several jobs: linting and formatting (using Ruff and Black) to ensure code style, testing (with pytest and coverage) to verify functionality, and documentation build checks (with MkDocs) to confirm that documentation compiles correctly. These automated workflows help catch issues early, maintain consistent standards, and ensure that every change merged into the main branch keeps the project stable and reliable.
 
