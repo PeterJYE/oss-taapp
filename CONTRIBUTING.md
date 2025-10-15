@@ -314,7 +314,7 @@ The project uses **Ruff** for static analysis and **Black** for code formatting.
 - **Ruff** checks for unused imports, style violations, and simple logic issues.  
 - **Black** formats code automatically to a uniform style.  
 To use them:  
-```bash
+``bash
 uv run ruff check .
 uv run black .
 These tools are integrated with the uv workspace, so no separate installation is required. Consistent formatting and static analysis keep the codebase clean, readable, and reliable.
