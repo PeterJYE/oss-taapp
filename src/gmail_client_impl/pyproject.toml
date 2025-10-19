@@ -3,7 +3,6 @@
 name = "gmail-client-impl"
 version = "0.1.0"
 description = "Gmail-backed implementation of the mail-client API"
-readme = "README.md"
 # Match the Python you actually run (you appear to use 3.9.x in the terminal)
 requires-python = ">=3.9"
 dependencies = [
