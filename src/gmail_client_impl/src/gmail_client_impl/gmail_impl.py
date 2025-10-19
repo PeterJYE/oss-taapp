@@ -23,7 +23,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore[import-untyped]
 from googleapiclient.discovery import Resource, build
 from googleapiclient.errors import HttpError
-from mail_client_api import message
+#from mail_client_api import message
 
 # Try to load .env file if python-dotenv is available
 try:

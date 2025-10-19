@@ -1,7 +1,23 @@
-"""Public export surface for ``mail_client_api``."""
+"""
+mail_client_api package
+Defines the base Client class for all mail clients (e.g., GmailClient).
+"""
 
-from mail_client_api import message
-from mail_client_api.client import Client, get_client
-from mail_client_api.message import Message, get_message
+__all__ = ["Client"]
 
-__all__ = ["Client", "Message", "get_client", "get_message", "message"]
+class Client:
+    """Base mail client interface that other mail clients inherit from."""
+
+    def __init__(self, *args, **kwargs):
+        """Initialize the client (optionally with credentials)."""
+        self.connected = False
+
+    def connect(self, *args, **kwargs):
+        """Simulate connection setup."""
+        self.connected = True
+        print("Mail client connected")
+
+    def send(self, *args, **kwargs):
+        """Placeholder send method."""
+        print("Mail client send() called")
+
