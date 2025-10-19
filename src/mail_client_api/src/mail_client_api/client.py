@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Iterator
 
-from mail_client_api.message import Message
+from .message import Message
 
 __all__ = ["Client", "get_client"]
 

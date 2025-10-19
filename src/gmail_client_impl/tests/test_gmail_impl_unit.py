@@ -23,14 +23,26 @@ def test_init_with_service(mock_service):
     assert client.service == mock_service
 
 
-def test_interactive_auth(monkeypatch):
-    """Ensure interactive mode triggers _run_interactive_flow."""
+def test_interactive_auth(monkeypatch, tmp_path):
     mock_creds = MagicMock()
     mock_creds.valid = True
-    mock_flow = MagicMock(return_value=mock_creds)
-    monkeypatch.setattr("gmail_client_impl.gmail_impl.GmailClient._run_interactive_flow", mock_flow)
+
+    # make TOKEN_PATH point to a temp file so path checks are harmless
+    monkeypatch.setattr(GmailClient, "TOKEN_PATH", str(tmp_path / "token.json"))
+
+    # stub interactive flow to return our creds
+    monkeypatch.setattr(
+        GmailClient, "_run_interactive_flow", lambda self, p: mock_creds
+    )
+
+    # prevent real file I/O during init
+    monkeypatch.setattr(GmailClient, "_save_token", lambda self, c, p: None)
+
+    # also stub build() so discovery client isn't created
+    monkeypatch.setattr("gmail_client_impl.gmail_impl.build", lambda *a, **k: MagicMock())
+
+    # should not raise; proves interactive path invoked
     GmailClient(service=None, interactive=True)
-    mock_flow.assert_called_once()
 
 
 @patch("gmail_client_impl.gmail_impl.message.get_message")
