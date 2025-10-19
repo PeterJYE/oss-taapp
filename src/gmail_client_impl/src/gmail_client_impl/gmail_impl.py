@@ -14,6 +14,7 @@ import os
 from collections.abc import Iterator
 from pathlib import Path
 from typing import ClassVar
+from typing import Optional
 
 import mail_client_api
 from google.auth.exceptions import GoogleAuthError, RefreshError
@@ -75,7 +76,7 @@ class GmailClient(mail_client_api.Client):
     ]
     FAILURE_TO_CRED = "Failed to obtain credentials. Please check your setup."
 
-    def __init__(self, service: Resource | None = None, *, interactive: bool = False) -> None:
+    def __init__(self, service: Optional[Resource] = None, *, interactive: bool = False) -> None:
         """Initialize the GmailClient, handling authentication."""
         self.logger = logging.getLogger(__name__)
         if service:
@@ -116,7 +117,7 @@ class GmailClient(mail_client_api.Client):
 
         self.service = build("gmail", "v1", credentials=creds)
 
-    def _run_interactive_flow(self, creds_path: str) -> Credentials | None:
+    def _run_interactive_flow(self, creds_path: str) -> Optional[Credentials]:
         """Run the interactive OAuth flow.
 
         This method launches a local web server to handle the OAuth2 flow,
@@ -130,7 +131,7 @@ class GmailClient(mail_client_api.Client):
         )
         return flow.run_local_server(port=0)  # type: ignore[no-any-return]
 
-    def _auth_from_env(self) -> Credentials | None:
+    def _auth_from_env(self) -> Optional[Credentials]:
         """Attempt to authenticate using environment variables.
 
         Expected environment variables:
@@ -163,7 +164,7 @@ class GmailClient(mail_client_api.Client):
         except (GoogleAuthError, RefreshError, OSError, ValueError):
             return None
 
-    def _auth_from_token_file(self, token_path: str) -> Credentials | None:
+    def _auth_from_token_file(self, token_path: str) -> Optional[Credentials]:
         """Attempt to load credentials from a token file and refresh if needed.
 
         Args:
