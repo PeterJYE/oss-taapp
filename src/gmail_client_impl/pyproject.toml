@@ -2,9 +2,8 @@
 [project]
 name = "gmail-client-impl"
 version = "0.1.0"
-description = "Gmail-backed implementation of the mail-client API"
-# Match the Python you actually run (you appear to use 3.9.x in the terminal)
-requires-python = ">=3.9"
+description = "Add your description here"
+requires-python = ">=3.11"
 dependencies = [
     "dotenv>=0.9.9",
     "google-api-python-client>=2.177.0",
