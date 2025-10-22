@@ -60,3 +60,7 @@ def test_service_message_and_adapter_roundtrip(monkeypatch) -> None:
 
     assert adapter.mark_as_read("m1") is True
     assert adapter.delete_message("m1") is True
+
+
+
+
