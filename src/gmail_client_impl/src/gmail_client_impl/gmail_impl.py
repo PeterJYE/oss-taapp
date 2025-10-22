@@ -261,7 +261,7 @@ class GmailClient(mail_client_api.Client):
             msg = self.get_message(message_id)
             subject = msg.subject or "No subject"
             self.logger.info("Attempting to delete message %s w subject: %s", message_id, subject)
-        except (HttpError, OSError, ValueError) as e:
+        except (HttpError, OSError, ValueError, NotImplementedError) as e:
             self.logger.warning("Could not retrieve %s details before deletion: %s", message_id, e)
 
         try:

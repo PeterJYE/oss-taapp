@@ -30,5 +30,8 @@ def register() -> None:
     _register_message()
 
 
-# Dependency Injection happens at import time
-register()
+# Note: Previously this package auto-registered its implementations at import-time.
+# That behavior causes cross-test pollution (overriding the abstract API globally
+# before some tests expect the default NotImplementedError). Tests should import
+# this package and call `register()` explicitly when they want to activate the
+# Gmail implementations.
