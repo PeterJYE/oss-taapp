@@ -14,27 +14,29 @@ class ServiceMessage(BaseMessage):
 
     @property
     def id(self) -> str:
-        return getattr(self._detail, "id", "")
+        return self._detail.id
 
     @property
     def from_(self) -> str:
-        return getattr(self._detail, "from_", "")
+        return self._detail.from_
 
     @property
     def to(self) -> str:
-        return getattr(self._detail, "to", "")
+        return self._detail.to
 
     @property
     def date(self) -> str:
-        return getattr(self._detail, "date", "")
+        return self._detail.date
 
     @property
     def subject(self) -> str:
-        return getattr(self._detail, "subject", "")
+        return self._detail.subject
 
     @property
     def body(self) -> str:
-        return getattr(self._detail, "body", "")
+        if isinstance(self._detail, MessageDetail):
+            return self._detail.body
+        return ""
 
 
 class ServiceClientAdapter(Client):
