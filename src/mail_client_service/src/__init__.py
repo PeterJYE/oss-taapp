@@ -9,6 +9,4 @@ Usage:
     # Run with: uvicorn mail_client_service:app --reload
 """
 
-from .main import app
-
-__all__ = ["app"]
+from . import main
