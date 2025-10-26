@@ -2,7 +2,7 @@
 name = "ta-assignment"
 version = "0.1.0"
 description = "Template repository for a mail client"
-readme = "README.md"
+readme = "../../README.md"
 requires-python = ">=3.11"
 dependencies = []
 
@@ -18,12 +18,14 @@ dev = [
     "pytest-cov>=6.2.1",
     "ruff>=0.12.7",
     "types-requests>=2.32.4.20250611",
+    "attrs>=25.3.0"
 ]
 
 [tool.uv.workspace]
 members = [
   "src/mail_client_api",
   "src/gmail_client_impl",
+  "src/mail_client_service",
 ]
 
 [tool.ruff]
@@ -73,7 +75,7 @@ markers = [
 
 [tool.coverage.run]
 source = ["src"]
-omit = ["*/tests/*", "*/__main__.py"]
+omit = ["*/tests/*", "*/__main__.py", "src/generated_client/*", "src/generated_client/**"]
 
 [tool.coverage.report]
 fail_under = 85 # Justification: A high threshold ensures most code is tested.

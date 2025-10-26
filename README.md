@@ -219,3 +219,21 @@ See `docs/circleci-setup.md` for detailed CI/CD setup instructions.
 - Use integration tests (`uv run pytest -m integration`) to verify component interactions
 - Run full test suite (`uv run pytest`) before pushing to ensure CI compatibility
 - The CircleCI pipeline provides automated validation on every push
+
+  ## Running the FastAPI Service in Docker
+
+### Build the Image
+```bash
+
+docker build -t mail-client-service:latest .
+```
+
+### Run the Container
+```bash
+
+
+docker run --rm -it \
+  -p 8000:8000 \
+  -v $(pwd)/credentials.json:/app/src/mail_client_service/credentials.json:ro \
+  mail-client-service:latest
+```

@@ -34,7 +34,87 @@ def test_get_client_and_authenticate() -> None:
     except FileNotFoundError:
         pytest.skip("Skipping integration test: credentials.json not found.")
     except (RuntimeError, ValueError, ConnectionError) as e:
+        # When real credentials are not present, the implementation raises a RuntimeError
+        # explaining that interactive auth is disabled. In local development we prefer to
+        # skip these tests rather than fail; CI (CircleCI) should provide credentials.
+        msg = str(e)
+        if "No valid credentials found" in msg or "interactive mode is disabled" in msg:
+            pytest.skip("Skipping integration test: no valid credentials available")
+        # Otherwise re-raise as a test failure to catch unexpected errors
         pytest.fail(f"Integration test failed during authentication or API call: {e}")
+
+
+@pytest.mark.integration
+def test_adapter_service_integration() -> None: #IMPLEMENTATION
+
+
+    class DummyMessage:
+        def __init__(self, id: str, subject: str, from_: str = "alice@example.com"):
+            self.id = id
+            self.subject = subject
+            self.from_ = from_
+            self.to = "me@example.com"
+            self.date = "2025-01-01T00:00:00Z"
+            self.body = "Hello from dummy"
+
+    class DummyGmailClient:
+        def __init__(self):
+            self._messages = [DummyMessage("m1", "Subject 1"), DummyMessage("m2", "Subject 2")]
+
+        def get_messages(self, max_results: int = 10):
+            for m in self._messages[:max_results]:
+                yield m
+
+        def get_message(self, message_id: str):
+            for m in self._messages:
+                if m.id == message_id:
+                    return m
+            raise KeyError("not found")
+
+        def delete_message(self, message_id: str) -> bool:
+            for i, m in enumerate(self._messages):
+                if m.id == message_id:
+                    del self._messages[i]
+                    return True
+            return False
+
+        def mark_as_read(self, message_id: str) -> bool:
+            return any(m.id == message_id for m in self._messages)
+
+    dummy = DummyGmailClient()
+
+    # Skip if runtime deps are missing
+    pytest.importorskip("fastapi")
+    pytest.importorskip("adapter.service_client_adapter")
+
+    from fastapi.testclient import TestClient
+    from adapter.service_client_adapter import ServiceClientAdapter
+    from mail_client_service import app as mail_app
+    from mail_client_service.main import get_client_dep
+
+    # Override the dependency so the service uses mocked gmail client
+    mail_app.dependency_overrides[get_client_dep] = lambda: dummy
+
+    try:
+        client = TestClient(mail_app)
+        adapter = ServiceClientAdapter(base_url=client.base_url)
+
+        msgs = list(adapter.get_messages(max_results=10))
+        assert len(msgs) == 2
+        assert msgs[0].id == "m1"
+        assert msgs[0].subject == "Subject 1"
+
+        msg = adapter.get_message("m2")
+        assert msg.id == "m2"
+        assert msg.subject == "Subject 2"
+
+        assert adapter.mark_as_read("m1") is True
+        assert adapter.delete_message("m1") is True
+
+        msgs_after = list(adapter.get_messages(max_results=10))
+        assert len(msgs_after) == 1
+    finally:
+        mail_app.dependency_overrides.pop(get_client_dep, None)
 
 
 @pytest.mark.circleci
@@ -119,11 +199,15 @@ def test_client_scope_permissions() -> None:
     except FileNotFoundError:
         pytest.skip("Skipping integration test: credentials.json not found.")
     except (RuntimeError, ValueError, ConnectionError) as e:
-        # If we get a 403 error, it's likely a scope issue
-        if "403" in str(e) or "insufficient" in str(e).lower():
+        msg = str(e)
+        # Skip locally if credentials are missing; CI will run these tests with proper creds
+        if "No valid credentials found" in msg or "interactive mode is disabled" in msg:
+            pytest.skip("Skipping integration test: no valid credentials available")
+        # If we get a 403 error, it's likely a scope issue and should fail explicitly
+        if "403" in msg or "insufficient" in msg.lower():
             pytest.fail(f"OAuth scope issue - client may not have required permissions: {e}")
-        else:
-            pytest.fail(f"Integration test failed: {e}")
+        # Other errors should fail the test to surface unexpected issues
+        pytest.fail(f"Integration test failed: {e}")
 
 
 @pytest.mark.circleci

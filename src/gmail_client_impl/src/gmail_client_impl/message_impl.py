@@ -205,5 +205,18 @@ def get_message_impl(msg_id: str, raw_data: str) -> message.Message:
 
 def register() -> None:
     """Register the Gmail message implementation with the message abstraction."""
-    message.get_message = get_message_impl
+    # Some test helpers reload the `mail_client_api.message` module which can
+    # create a new module object. Set the symbol on the module object that is
+    # currently importable as `mail_client_api.message` so registration works
+    # even after reloads done by tests.
+    import importlib
+
+    try:
+        m = importlib.import_module("mail_client_api.message")
+        setattr(m, "get_message", get_message_impl)
+    except Exception:
+        # Fallback: update the module object this file imported earlier
+        message.get_message = get_message_impl
+
+    # Also set the top-level factory function on the abstract package
     mail_client_api.get_message = get_message_impl
