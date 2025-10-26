@@ -22,8 +22,8 @@ dev = [
 
 [tool.uv.workspace]
 members = [
-  "src/mail_client_api",
   "src/gmail_client_impl",
+  "src/ai_service_api",
 ]
 
 [tool.ruff]
@@ -42,7 +42,7 @@ per-file-ignores = { "**/test_*.py" = ["TRY300", "BLE001", "ANN401", "SLF001", "
 [tool.mypy]
 strict = true
 explicit_package_bases = true # Required for src layout
-mypy_path = ["src/mail_client_api/src", "src/gmail_client_impl/src"]
+mypy_path = ["src/ai_service_api/src", "src/gmail_client_impl/src"]
 ignore_missing_imports = false
 warn_unused_ignores = false
 
