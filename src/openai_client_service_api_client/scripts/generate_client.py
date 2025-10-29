@@ -13,21 +13,21 @@ def generate_client(openapi_url: str | None = None) -> None:
     Args:
         openapi_url: URL to the OpenAPI specification. If None, will use
             environment variable OPENAPI_URL or default to localhost:8000.
+
     """
-    
     if openapi_url is None:
         openapi_url = os.getenv("OPENAPI_URL", "http://localhost:8000/openapi.json")
-    
-    
+
+
     output_dir = Path(__file__).parent.parent / "src" / "openai_client_service_api_client"
-    
-   
+
+
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     print(f"Generating OpenAPI client from {openapi_url}")
     print(f"Output directory: {output_dir}")
-    
-    
+
+
     cmd = [
         sys.executable,
         "-m",
@@ -40,7 +40,7 @@ def generate_client(openapi_url: str | None = None) -> None:
         "openai_client_service_api_client",
         "--meta=none",
     ]
-    
+
     try:
         subprocess.run(cmd, check=True)
         print("✓ Client generated successfully!")

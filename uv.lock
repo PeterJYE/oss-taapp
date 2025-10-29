@@ -1117,24 +1117,15 @@ source = { virtual = "src/openai_client_service_api_client" }
 dependencies = [
     { name = "attrs" },
     { name = "httpx" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "mypy" },
     { name = "openapi-python-client" },
-    { name = "ruff" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "attrs", specifier = ">=25.3.0" },
     { name = "httpx", specifier = ">=0.27.0" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.17.0" },
-    { name = "openapi-python-client", marker = "extra == 'dev'", specifier = ">=0.27.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.12.7" },
+    { name = "openapi-python-client", specifier = ">=0.27.0" },
 ]
-provides-extras = ["dev"]
 
 [[package]]
 name = "openapi-python-client"

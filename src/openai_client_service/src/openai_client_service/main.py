@@ -1,19 +1,31 @@
-from fastapi import FastAPI
+"""FastAPI application for OpenAI Client Service."""
+
 from dotenv import load_dotenv
+from fastapi import FastAPI
 
-load_dotenv()  # read .env for keys/urls
+from openai_client_impl import init_db  
 
-from openai_client_impl import init_db  # type: ignore
-from .routes import oauth, ai
+from .routes import ai, oauth
 
-app = FastAPI(title="OpenAI Client Service", version="0.1.0")
+load_dotenv()
 
-# init lightweight storage on startup (creates .data/app.db if using storage later)
-init_db()
+app = FastAPI(
+    title="OpenAI Client Service",
+    description="A service for managing OpenAI API interactions with secure credential storage",
+    version="0.1.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
 
-app.include_router(oauth.router, prefix="/auth", tags=["OAuth"])
-app.include_router(ai.router, prefix="/ai", tags=["AI"])
+@app.on_event("startup")
+async def startup_event() -> None:
+    """Initialize database on application startup."""
+    init_db()
+
+app.include_router(oauth.router, prefix="/auth", tags=["Authentication"])
+app.include_router(ai.router, prefix="/ai", tags=["AI Operations"])
 
 @app.get("/health")
-def health():
-    return {"status": "ok"}
+def health_check() -> dict[str, str]:
+    """Health check endpoint."""
+    return {"status": "ok", "service": "openai-client-service"}

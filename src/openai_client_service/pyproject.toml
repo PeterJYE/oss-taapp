@@ -9,7 +9,7 @@ dependencies = [
   "httpx",
   "pydantic>=2",
   "python-dotenv",
-  "openai-client-impl",  # comes from your workspace
+  "openai-client-impl",
 ]
 
 [tool.uv.sources]

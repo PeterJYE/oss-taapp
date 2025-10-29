@@ -53,7 +53,7 @@ ignore = [
   "D213",
   "S101",
 ]
-per-file-ignores = { "**/test_*.py" = ["TRY300", "BLE001", "ANN401", "SLF001", "E501", "S105", "ARG001", "ARG002", "S106", "INP001", "PLC0415"] }
+per-file-ignores = { "**/test_*.py" = ["TRY300", "BLE001", "ANN401", "SLF001", "E501", "S105", "ARG001", "ARG002", "S106", "INP001", "PLC0415"], "**/scripts/**/*.py" = ["T201", "S603", "INP001", "W293"] }
 
 [tool.mypy]
 strict = true
