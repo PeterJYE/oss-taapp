@@ -31,18 +31,13 @@ This project implements a clean architecture with the following components:
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/PeterJYE/oss-taapp.git
 cd oss-taapp
 ```
 
 2. Install dependencies:
 ```bash
 uv sync
-```
-
-3. Start the server:
-```bash
-uv run python -c "import sys; sys.path.insert(0, 'src'); sys.path.insert(0, 'src/openai_client_impl/src'); sys.path.insert(0, 'src/openai_client_service/src'); import uvicorn; from openai_client_service.main import app; uvicorn.run(app, host='0.0.0.0', port=8000)"
 ```
 
 The service will be available at ``
