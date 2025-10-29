@@ -2,15 +2,19 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY . .
+# Copy workspace files
+COPY pyproject.toml uv.lock ./
+COPY src/ ./src/
 
+# Install uv and sync dependencies
 RUN pip install uv
 
 RUN uv sync --frozen
 
-ENV PYTHONPATH=/app/src:/app/clients/python
+ENV PYTHONPATH=/app/src
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "uv run uvicorn src.mail_client_service.src.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Run the OpenAI client service
+CMD ["sh", "-c", "uv run uvicorn openai_client_service.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
 

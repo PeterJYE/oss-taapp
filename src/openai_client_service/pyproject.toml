@@ -12,4 +12,5 @@ dependencies = [
   "openai-client-impl",  # comes from your workspace
 ]
 
-packages = [{ include = "openai_client_service", from = "src" }]
+[tool.uv.sources]
+openai-client-impl = { workspace = true }

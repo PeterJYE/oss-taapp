@@ -39,6 +39,7 @@ members = [
   "src/openai_client_interface",
   "src/openai_client_impl",
   "src/openai_client_service",
+  "src/openai_client_service_api_client",
 ]
 
 [tool.ruff]
@@ -62,6 +63,7 @@ mypy_path = [
   "src/openai_client_interface/src",
   "src/openai_client_impl/src",
   "src/openai_client_service/src",
+  "src/openai_client_service_api_client/src",
 ]
 ignore_missing_imports = false
 warn_unused_ignores = false
@@ -71,6 +73,7 @@ module = [
     "openai_client_interface.*",
     "openai_client_impl.*",
     "openai_client_service.*",
+    "openai_client_service_api_client.*",
 ]
 ignore_missing_imports = true
 
@@ -88,7 +91,7 @@ markers = [
 
 [tool.coverage.run]
 source = ["src"]
-omit = ["*/tests/*", "*/__main__.py", "src/generated_client/*", "src/generated_client/**"]
+omit = ["*/tests/*", "*/__main__.py", "src/generated_client/*", "src/generated_client/**", "src/openai_client_service_api_client/src/**"]
 
 [tool.coverage.report]
 fail_under = 85
