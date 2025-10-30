@@ -1,14 +1,14 @@
-"""Unit tests for the AI adapter.
+"""Unit tests for the OpenAI service adapter.
 
 These tests use small dummy objects to simulate HTTP responses and verify
-adapter behavior.
+adapter behavior without requiring the FastAPI service or OpenAI credentials.
 """
 
 from __future__ import annotations
 
 import pytest
 
-from ai_adapter import AdapterAPIError, AIAdapter
+from ai_adapter import AdapterAPIError, OpenAIServiceAdapter
 
 
 class DummyResp:
@@ -26,7 +26,7 @@ class DummyResp:
 
 
 class DummyHTTP:
-    """A minimal fake http client with ``post`` and ``get`` methods."""
+    """A minimal fake http client with ``post``, ``get``, and ``delete`` methods."""
 
     def __init__(self, resp: DummyResp) -> None:
         """Create a dummy HTTP client that always returns ``resp``."""
@@ -39,67 +39,49 @@ class DummyHTTP:
     def get(self, path: str) -> DummyResp:
         """Return the configured response for GET requests."""
         return self._resp
+    def delete(self, path: str) -> DummyResp:
+        """Return the configured response for DELETE requests."""
+        return self._resp
 
 
-def test_generate_success() -> None:
-    """generate() returns the text when the service responds 200."""
-    resp = DummyResp(status_code=200, json_data={"text": "hello world"})
-    adapter = AIAdapter(client=None, base_url="http://example.com")
-    # monkeypatch the internal httpx client to our dummy
-    adapter._http = DummyHTTP(resp)
-
-    out = adapter.generate("hi")
-    assert out == "hello world"
+def test_create_conversation_success() -> None:
+    """create_conversation returns conversation_id on 200."""
+    resp = DummyResp(status_code=200, json_data={"conversation_id": "abc"})
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined]
+    assert adapter.create_conversation() == "abc"
 
 
-def test_generate_api_error() -> None:
-    """generate() raises AdapterAPIError when the remote service returns >=500."""
-    resp = DummyResp(status_code=500, content=b"error")
-    adapter = AIAdapter(client=None, base_url="http://example.com")
-    adapter._http = DummyHTTP(resp)
-
+def test_generate_response_api_error_unauthorized() -> None:
+    """generate_response raises AdapterAPIError on 401 without API key."""
+    resp = DummyResp(status_code=401, content=b"Missing API key")
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined]
     with pytest.raises(AdapterAPIError):
-        adapter.generate("hi")
+        adapter.generate_response(["hello"])  # no API key -> expect 401
 
 
-def test_generate_with_generated_client() -> None:
-    """Adapter should call into a provided generated-client instance."""
-
-    class DummyGenClient:
-        def generate(self, payload: dict[str, object]) -> dict[str, object]:
-            return {"text": f"gen:{payload.get('prompt', '')}"}
-
-    client = DummyGenClient()
-    adapter = AIAdapter(client=client)
-
-    out = adapter.generate("hello")
-    assert out == "gen:hello"
+def test_get_conversation_success() -> None:
+    """get_conversation returns dict when 200."""
+    conv = {"id": "abc", "messages": [["user", "hi"]]}
+    resp = DummyResp(status_code=200, json_data=conv)
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined]
+    data = adapter.get_conversation("abc")
+    assert data["id"] == "abc"
 
 
-def test_chat_with_generated_client() -> None:
-    """Adapter.chat should concatenate message contents from the generated client."""
-    class DummyGenClient:
-        def chat(self, payload: dict[str, object]) -> dict[str, object]:
-            msgs = payload.get("messages", [])
-            return {"text": "|".join(str(m.get("content", "")) for m in msgs)}
-
-    client = DummyGenClient()
-    adapter = AIAdapter(client=client)
-
-    out = adapter.chat([{"role": "user", "content": "hi"}, {"role": "bot", "content": "hey"}])
-    assert out == "hi|hey"
+def test_delete_conversation_success() -> None:
+    """delete_conversation returns True on ok."""
+    resp = DummyResp(status_code=200, json_data={"ok": True})
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined]
+    assert adapter.delete_conversation("abc") is True
 
 
-def test_health_check_prefers_client() -> None:
-    """health_check should prefer the generated client's health method when present."""
-    class DummyGenClient:
-        def health(self) -> object:
-            class R:
-                ok = True
-
-            return R()
-
-    client = DummyGenClient()
-    adapter = AIAdapter(client=client)
-
+def test_health_check_true_on_ok_status() -> None:
+    """health_check returns True when status is ok."""
+    resp = DummyResp(status_code=200, json_data={"status": "ok"})
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined]
     assert adapter.health_check() is True

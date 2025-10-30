@@ -1,20 +1,21 @@
-"""Simple AI service adapter implementation.
+"""OpenAI Client Service adapter implementation.
 
-This adapter exposes a small synchronous API (generate, chat, health_check)
-and forwards calls to a provided generated-client instance or to an HTTP
-service at ``base_url`` using httpx. The code keeps the surface small so it is
-easy to wire into tests and the rest of the project.
+This adapter matches the HW1 pattern: a concrete client that calls a known set
+of HTTP endpoints with a small, explicit surface. It hits all five endpoints
+exposed by the service and avoids dynamic attribute access.
+
+Endpoints covered:
+- POST /ai/generate-response
+- POST /ai/conversations
+- GET  /ai/conversations/{conversation_id}
+- DELETE /ai/conversations/{conversation_id}
+- GET  /health
 """
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import TYPE_CHECKING, Protocol
+from urllib.parse import urlparse
 
 import httpx
-
-if TYPE_CHECKING:
-    # collections.abc.Mapping is only required for type-checking annotations
-    from collections.abc import Mapping
 
 
 HTTP_OK = 200
@@ -38,174 +39,100 @@ class AdapterAPIError(AdapterError):
         self.status_code = status_code
         self.content = content
 
+class OpenAIServiceAdapter:
+    """Concrete adapter that calls the OpenAI Client Service.
 
-class GeneratedClientProtocol(Protocol):
-    def generate(self, payload: Mapping[str, object]) -> object:  # pragma: no cover - typing only
-        ...
-
-    def chat(self, payload: Mapping[str, object]) -> object:  # pragma: no cover - typing only
-        ...
-
-    def health(self) -> object | None:  # pragma: no cover - typing only
-        ...
-
-
-def _resp_to_text(resp: object) -> str:
-    """Convert a response-like object to text safely.
-
-    Handles objects with a ``text`` attribute, dict-like results, and
-    falls back to ``str(resp)``.
-    """
-    if hasattr(resp, "text"):
-        return str(resp.text)  # type: ignore[attr-defined]
-    if isinstance(resp, dict):
-        return str(resp.get("text", ""))
-    return str(resp)
-
-
-class AIAdapter:
-    """Adapter that implements a small AI client surface and forwards calls.
-
-    The constructor accepts either a generated-client instance (client) or a
-    ``base_url`` to target a running service. If both are provided, ``client``
-    is preferred.
+    Required headers:
+    - X-Subject: the user subject required by the service for per-user data.
     """
 
-    def __init__(
-        self,
-        *,
-        base_url: str | None = None,
-        client: GeneratedClientProtocol | None = None,
-        timeout: float = 5.0,
-    ) -> None:
-        self._provided_client = client
+    def __init__(self, *, base_url: str, subject: str, timeout: float = 5.0) -> None:
+        if not base_url:
+            msg = "base_url is required"
+            raise ValueError(msg)
+
         self._base_url = base_url
         self._timeout = timeout
+        self._headers: dict[str, str] = {"X-Subject": subject}
 
-        # If no generated client is provided, create a simple httpx client
-        if client is None:
-            if not base_url:
-                msg = "Either 'client' or 'base_url' must be provided"
-                raise ValueError(msg)
-            self._http: httpx.Client | None = httpx.Client(base_url=base_url, timeout=timeout)
-        else:
-            self._http = None
+        # When tests pass base_url='http://testserver', route requests in-process
+        # by building an ASGI transport against the app.
+        transport: httpx.BaseTransport | None = None
+        host = (urlparse(base_url).hostname or "").lower()
+        if host == "testserver":
+            try:
+                from openai_client_service.main import app  # noqa: PLC0415 - lazy import for tests
+                transport = httpx.ASGITransport(app=app)  # type: ignore[arg-type]
+            except ImportError:
+                transport = None
 
-    # --- helpers to adapt various generated-client shapes ---
-    def _call_client_method(self, method_name: str, *args: object, **kwargs: object) -> object:
-        """Call an appropriate method on the provided generated client.
+        self._http = httpx.Client(base_url=base_url, headers=self._headers, timeout=timeout, transport=transport)
 
-        Some generated clients expose methods directly (e.g. ``generate``),
-        others nest API groups (e.g. ``client.ai.generate``). This helper
-        tries a small set of heuristics to find and call the right callable.
+    # ---- Endpoints ----
+    def generate_response(self, messages: list[str], *, conversation_id: str | None = None) -> dict[str, object | None]:
+        """POST /ai/generate-response returning content, tokens_used, conversation_id.
+
+        Raises AdapterAPIError on non-2xx responses.
         """
-        client = self._provided_client
-        if client is None:
-            msg = "No generated client provided"
-            raise AdapterError(msg)
-
-        # Direct method first
-        if hasattr(client, method_name):
-            return getattr(client, method_name)(*args, **kwargs)
-
-        # Some generated clients group endpoints by resource (e.g. client.ai.generate)
-        for attr in ("ai", "model", "default", "client"):
-            if hasattr(client, attr):
-                group = getattr(client, attr)
-                if hasattr(group, method_name):
-                    method = getattr(group, method_name)
-                    return method(*args, **(kwargs or {}))
-
-        # Some clients provide a low-level request method: try a simple POST helper
-        # We attempt to detect common names like post or request and fall back to them.
-        if hasattr(client, "post"):
-            post = client.post  # type: ignore[attr-defined]
-            payload = (kwargs or {}).get("json") or (args[0] if args else None)
-            return post(f"/{method_name}", json=payload)
-        if hasattr(client, "request"):
-            request = client.request  # type: ignore[attr-defined]
-            payload = (kwargs or {}).get("json") or (args[0] if args else None)
-            return request("POST", f"/{method_name}", json=payload)
-
-        msg = f"Provided generated-client does not expose {method_name}"
-        raise AdapterError(msg)
-
-    # --- public API ---
-    def generate(self, prompt: str, *, max_tokens: int = 256) -> str:
-        """Call the model to synchronously generate text for ``prompt``.
-
-        Returns the generated text on success or raises :class:`AdapterError` on
-        failure.
-        """
-        payload: dict[str, object] = {"prompt": prompt, "max_tokens": max_tokens}
-
+        payload: dict[str, object | None] = {"messages": messages, "conversation_id": conversation_id}
         try:
-            if self._provided_client is not None:
-                resp = self._call_client_method("generate", payload)
-                return _resp_to_text(resp)
-
-            assert self._http is not None
-            r = self._http.post("/generate", json=payload)
+            r = self._http.post("/ai/generate-response", json=payload)
         except httpx.HTTPError as exc:
             raise AdapterNetworkError(exc) from exc
-        except AdapterError:
-            raise
-        except Exception as exc:  # pragma: no cover - unexpected client error
-            raise AdapterError(exc) from exc
-
         if r.status_code >= HTTP_BAD:
             raise AdapterAPIError(r.status_code, r.content)
+        data = r.json()
+        # return as-is to keep close to service contract
+        return {
+            "content": data.get("content"),
+            "tokens_used": data.get("tokens_used"),
+            "conversation_id": data.get("conversation_id"),
+        }
 
-        body = r.json()
-        return str(body.get("text", ""))
-
-    def chat(self, messages: list[dict[str, object]]) -> str:
-        """Send a conversation-style request with ``messages`` and return text.
-
-        Each message should be a mapping with at least ``{"role": ..., "content": ...}``.
-        """
-        payload = {"messages": messages}
-
+    def create_conversation(self) -> str:
+        """POST /ai/conversations -> returns conversation_id."""
         try:
-            if self._provided_client is not None:
-                resp = self._call_client_method("chat", payload)
-                return _resp_to_text(resp)
-
-            assert self._http is not None
-            r = self._http.post("/chat", json=payload)
+            r = self._http.post("/ai/conversations")
         except httpx.HTTPError as exc:
             raise AdapterNetworkError(exc) from exc
-        except AdapterError:
-            raise
-        except Exception as exc:  # pragma: no cover - unexpected client error
-            raise AdapterError(exc) from exc
-
         if r.status_code >= HTTP_BAD:
             raise AdapterAPIError(r.status_code, r.content)
+        data = r.json()
+        conv_id = data.get("conversation_id")
+        return str(conv_id) if conv_id is not None else ""
 
-        return str(r.json().get("text", ""))
+    def get_conversation(self, conversation_id: str) -> dict[str, object]:
+        """GET /ai/conversations/{id} -> returns conversation object."""
+        try:
+            r = self._http.get(f"/ai/conversations/{conversation_id}")
+        except httpx.HTTPError as exc:
+            raise AdapterNetworkError(exc) from exc
+        if r.status_code >= HTTP_BAD:
+            raise AdapterAPIError(r.status_code, r.content)
+        return r.json()
+
+    def delete_conversation(self, conversation_id: str) -> bool:
+        """DELETE /ai/conversations/{id} -> returns ok boolean in body."""
+        try:
+            r = self._http.delete(f"/ai/conversations/{conversation_id}")
+        except httpx.HTTPError as exc:
+            raise AdapterNetworkError(exc) from exc
+        if r.status_code >= HTTP_BAD:
+            raise AdapterAPIError(r.status_code, r.content)
+        body = r.json() if r.content else {"ok": True}
+        ok = body.get("ok", True)
+        return bool(ok)
 
     def health_check(self) -> bool:
-        """Return ``True`` if the remote service responds healthy.
-
-        Prefer a generated client's health endpoint if available; otherwise
-        perform an HTTP GET to ``/health``.
-        """
+        """GET /health -> bool."""
         try:
-            if self._provided_client is not None:
-                # try health on client or grouped API
-                try:
-                    resp = self._call_client_method("health")
-                except AdapterError:
-                    return True
-
-                if resp is None:
-                    return True
-                return bool(getattr(resp, "ok", True))
-
-            assert self._http is not None
             r = self._http.get("/health")
         except httpx.HTTPError:
             return False
-        else:
+        if r.status_code >= HTTP_BAD:
+            return False
+        try:
+            data = r.json()
+        except ValueError:
             return r.status_code == HTTP_OK
+        return bool(data.get("status") == "ok")

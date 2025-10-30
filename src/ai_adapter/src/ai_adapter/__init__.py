@@ -1,11 +1,10 @@
 """AI Service Adapter.
 
 This package provides an adapter that exposes a small, stable API for
-consumers and forwards calls to a remote AI service (via an auto-generated
-client or an HTTP ``base_url``). The implementation is intentionally minimal
-and designed to be wired into the HW2 pipeline as the Service Client Adapter.
+consumers and forwards calls to the OpenAI Client Service using explicit HTTP
+calls. The implementation is intentionally minimal and mirrors the HW1 style.
 """
 
-from ._adapter import AdapterAPIError, AdapterError, AIAdapter
+from ._adapter import AdapterAPIError, AdapterError, OpenAIServiceAdapter
 
-__all__ = ["AIAdapter", "AdapterAPIError", "AdapterError"]
+__all__ = ["AdapterAPIError", "AdapterError", "OpenAIServiceAdapter"]
