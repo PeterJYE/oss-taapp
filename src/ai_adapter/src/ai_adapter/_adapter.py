@@ -1,10 +1,8 @@
-"""OpenAI Client Service adapter implementation.
+"""OpenAI Client Service adapter.
 
-This adapter matches the HW1 pattern: a concrete client that calls a known set
-of HTTP endpoints with a small, explicit surface. It hits all five endpoints
-exposed by the service and avoids dynamic attribute access.
+Explicit HTTP client for five endpoints, no dynamic attribute access.
 
-Endpoints covered:
+Endpoints:
 - POST /ai/generate-response
 - POST /ai/conversations
 - GET  /ai/conversations/{conversation_id}
@@ -55,8 +53,6 @@ class OpenAIServiceAdapter:
         self._timeout = timeout
         self._headers: dict[str, str] = {"X-Subject": subject}
 
-        # When tests pass base_url='http://testserver', route requests in-process
-        # by building an ASGI transport against the app.
         transport: httpx.BaseTransport | None = None
         host = (urlparse(base_url).hostname or "").lower()
         if host == "testserver":
@@ -68,7 +64,6 @@ class OpenAIServiceAdapter:
 
         self._http = httpx.Client(base_url=base_url, headers=self._headers, timeout=timeout, transport=transport)
 
-    # ---- Endpoints ----
     def generate_response(self, messages: list[str], *, conversation_id: str | None = None) -> dict[str, object | None]:
         """POST /ai/generate-response returning content, tokens_used, conversation_id.
 
@@ -82,7 +77,6 @@ class OpenAIServiceAdapter:
         if r.status_code >= HTTP_BAD:
             raise AdapterAPIError(r.status_code, r.content)
         data = r.json()
-        # return as-is to keep close to service contract
         return {
             "content": data.get("content"),
             "tokens_used": data.get("tokens_used"),
