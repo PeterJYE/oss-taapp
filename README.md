@@ -72,7 +72,7 @@ docker run -p 8000:8000 openai-client-service
 ## Usage Examples
 
 ### 1. Login via OAuth 2.0
-Open a browser to with  and complete the provider login. A `session_id` cookie will be set on success.
+Open a browser and complete the provider login. A `session_id` cookie will be set on success.
 
 ### 2. Set API Key
 ```bash
