@@ -17,6 +17,7 @@ This project implements a clean architecture with the following components:
 - 👥 **Multi-User Support**: Per-user API keys and conversation isolation
 - 💬 **Conversation Management**: Create, retrieve, and delete conversations
 - 🤖 **AI Response Generation**: Generate responses using OpenAI's API
+- 🛡️ **OAuth 2.0 Authentication**: Authorization Code flow with session cookies
 - 📚 **Auto-Generated Client**: OpenAPI-based client library generation
 
 ## Quick Start
@@ -52,6 +53,9 @@ docker run -p 8000:8000 openai-client-service
 ## API Endpoints
 
 ### Authentication
+- `GET /auth/login` - Start OAuth 2.0 Authorization Code flow
+- `GET /auth/callback` - OAuth 2.0 redirect URI to complete login
+- `POST /auth/logout` - Clear session
 - `POST /auth/set-openai-key` - Store OpenAI API key for a user
 
 ### AI Operations
@@ -67,34 +71,37 @@ docker run -p 8000:8000 openai-client-service
 
 ## Usage Examples
 
-### 1. Set API Key
+### 1. Login via OAuth 2.0
+Open a browser to with  and complete the provider login. A `session_id` cookie will be set on success.
+
+### 2. Set API Key
 ```bash
 curl -X POST http://localhost:8000/auth/set-openai-key \
   -H "Content-Type: application/json" \
   -d '{"subject": "user123", "api_key": "sk-your-openai-key"}'
 ```
 
-### 2. Create Conversation
+### 3. Create Conversation
 ```bash
 curl -X POST http://localhost:8000/ai/conversations \
-  -H "X-Subject: user123"
+  --cookie "session_id=YOUR_SESSION_ID"
 ```
 
-### 3. Generate Response
+### 4. Generate Response
 ```bash
 curl -X POST http://localhost:8000/ai/generate-response \
   -H "Content-Type: application/json" \
-  -H "X-Subject: user123" \
+  --cookie "session_id=YOUR_SESSION_ID" \
   -d '{
     "messages": ["Hello, how are you?"],
     "conversation_id": "your-conversation-id"
   }'
 ```
 
-### 4. Get Conversation
+### 5. Get Conversation
 ```bash
 curl -X GET http://localhost:8000/ai/conversations/your-conversation-id \
-  -H "X-Subject: user123"
+  --cookie "session_id=YOUR_SESSION_ID"
 ```
 
 ## Testing
@@ -144,12 +151,24 @@ response = client.ai.generate_response(
 )
 ```
 
+## AI Adapter
+
+The `ai_adapter` package provides a thin, typed adapter for calling the running service from Python applications without pulling in the generated client. It handles base URL, headers, timeouts, and offers a simple API.
+
+### Where it lives
+- Code: `src/ai_adapter/src/ai_adapter/_adapter.py`
+- Tests: `src/ai_adapter/tests/test_adapter.py`
+
+
+
+
 ## Development
 
 ### Project Structure
 ```
 oss-taapp/
 ├── src/
+│   ├── ai_adapter/              # Thin typed adapter for the service
 │   ├── ai_service_api/          # Abstract interfaces
 │   ├── openai_client_impl/     # OpenAI implementation
 │   ├── openai_client_service/  # FastAPI service
@@ -175,6 +194,13 @@ uv run ruff format .
 ### Environment Variables
 - `FERNET_KEY`: Encryption key for API key storage (auto-generated if not set)
 - `OPENAPI_URL`: URL for client generation (defaults to localhost:8000)
+- `OAUTH_CLIENT_ID`: OAuth 2.0 client ID
+- `OAUTH_CLIENT_SECRET`: OAuth 2.0 client secret (optional if using PKCE-only)
+- `OAUTH_AUTH_URL`: Authorization endpoint URL
+- `OAUTH_TOKEN_URL`: Token endpoint URL
+- `OAUTH_USERINFO_URL`: UserInfo endpoint URL (optional, recommended for subject)
+- `OAUTH_REDIRECT_URI`: Redirect URI (e.g., `http://localhost:8000/auth/callback`)
+- `OAUTH_SCOPE`: Space-separated scopes (default: `openid profile email`)
 
 ## Security
 

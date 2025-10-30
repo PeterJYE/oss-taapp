@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from openai_client_impl import AIClientImpl, MissingOpenAIKeyError
-from openai_client_service.dependencies import get_subject
+from openai_client_service.dependencies import get_authenticated_subject
 
 router = APIRouter()
 
@@ -22,7 +22,7 @@ class GenerateResponseRequest(BaseModel):
 @router.post("/generate-response")
 def generate_response(
     request: GenerateResponseRequest,
-    subject: Annotated[str, Depends(get_subject)],
+    subject: Annotated[str, Depends(get_authenticated_subject)],
 ) -> dict[str, str | int | None]:
     """Generate a model response using the abstract AIClient interface.
 
@@ -31,7 +31,7 @@ def generate_response(
 
     Args:
         request: Generate response request with messages and optional conversation ID
-        subject: User subject from X-Subject header
+        subject: User subject from OAuth session
 
     Returns:
         Response with content, tokens_used, and conversation_id
@@ -64,7 +64,7 @@ def generate_response(
 
 
 @router.post("/conversations")
-def create_conversation(subject: Annotated[str, Depends(get_subject)]) -> dict[str, str]:
+def create_conversation(subject: Annotated[str, Depends(get_authenticated_subject)]) -> dict[str, str]:
     """Create a new conversation and return its ID.
 
     Returns:
@@ -77,6 +77,14 @@ def create_conversation(subject: Annotated[str, Depends(get_subject)]) -> dict[s
     try:
         aiclient = AIClientImpl(subject=subject)
         conv_id = aiclient.create_conversation()
+    except MissingOpenAIKeyError as e:
+        raise HTTPException(
+            status_code=401,
+            detail={
+                "error": str(e),
+                "hint": "POST /auth/set-openai-key first to set your OpenAI API key.",
+            },
+        ) from e
     except RuntimeError as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
     else:
@@ -85,13 +93,13 @@ def create_conversation(subject: Annotated[str, Depends(get_subject)]) -> dict[s
 
 @router.get("/conversations/{conversation_id}")
 def get_conversation(
-    conversation_id: str, subject: Annotated[str, Depends(get_subject)],
+    conversation_id: str, subject: Annotated[str, Depends(get_authenticated_subject)],
 ) -> dict[str, str | list[tuple[str, str]]]:
     """Retrieve a conversation by its ID.
 
     Args:
         conversation_id: The unique identifier of the conversation
-        subject: User subject from X-Subject header
+        subject: User subject from OAuth session
 
     Returns:
         Conversation object with messages and metadata
@@ -103,6 +111,14 @@ def get_conversation(
     try:
         aiclient = AIClientImpl(subject=subject)
         conversation = aiclient.get_conversation(conversation_id)
+    except MissingOpenAIKeyError as e:
+        raise HTTPException(
+            status_code=401,
+            detail={
+                "error": str(e),
+                "hint": "POST /auth/set-openai-key first to set your OpenAI API key.",
+            },
+        ) from e
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     else:
@@ -114,12 +130,12 @@ def get_conversation(
 
 
 @router.delete("/conversations/{conversation_id}")
-def delete_conversation(conversation_id: str, subject: Annotated[str, Depends(get_subject)]) -> dict[str, str | bool]:
+def delete_conversation(conversation_id: str, subject: Annotated[str, Depends(get_authenticated_subject)]) -> dict[str, str | bool]:
     """Delete a conversation and all its messages.
 
     Args:
         conversation_id: The unique identifier of the conversation
-        subject: User subject from X-Subject header
+        subject: User subject from OAuth session
 
     Returns:
         Success status
@@ -131,6 +147,14 @@ def delete_conversation(conversation_id: str, subject: Annotated[str, Depends(ge
     try:
         aiclient = AIClientImpl(subject=subject)
         success = aiclient.delete_conversation(conversation_id)
+    except MissingOpenAIKeyError as e:
+        raise HTTPException(
+            status_code=401,
+            detail={
+                "error": str(e),
+                "hint": "POST /auth/set-openai-key first to set your OpenAI API key.",
+            },
+        ) from e
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     else:

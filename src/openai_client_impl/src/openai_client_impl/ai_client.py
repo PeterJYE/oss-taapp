@@ -69,10 +69,10 @@ class AIClientImpl:
             error_msg = "Messages list cannot be empty"
             raise ValueError(error_msg)
 
-        # Prepare messages for OpenAI API
+        
         openai_messages: list[dict[str, str]] = [{"role": "user", "content": msg} for msg in messages]
 
-        # If we have a conversation_id, load existing messages and append
+        
         if conversation_id:
             conv_data = get_conversation_data(conversation_id)
             if conv_data:
@@ -100,7 +100,7 @@ class AIClientImpl:
             else:
                 created_at = datetime.now(UTC).isoformat()
 
-            # Update conversation with new messages
+            
             updated_messages = [*openai_messages, {"role": "assistant", "content": content}]
             save_conversation(
                 conv_id=conversation_id,
