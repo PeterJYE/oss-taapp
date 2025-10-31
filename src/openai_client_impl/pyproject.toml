@@ -9,4 +9,11 @@ dependencies = [
   "python-dotenv",
   "itsdangerous",
 ]
-packages = [{ include = "openai_client_impl", from = "src" }]
+
+[build-system]
+requires = ["setuptools>=65.5.1", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["openai_client_impl*"]
