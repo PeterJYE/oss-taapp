@@ -9,12 +9,12 @@ Endpoints:
 - DELETE /ai/conversations/{conversation_id}
 - GET  /health
 """
+
 from __future__ import annotations
 
 from urllib.parse import urlparse
 
 import httpx
-
 
 HTTP_OK = 200
 HTTP_BAD = 400
@@ -37,6 +37,7 @@ class AdapterAPIError(AdapterError):
         self.status_code = status_code
         self.content = content
 
+
 class OpenAIServiceAdapter:
     """Concrete adapter that calls the OpenAI Client Service.
 
@@ -58,6 +59,7 @@ class OpenAIServiceAdapter:
         if host == "testserver":
             try:
                 from openai_client_service.main import app  # noqa: PLC0415 - lazy import for tests
+
                 transport = httpx.ASGITransport(app=app)  # type: ignore[arg-type]
             except ImportError:
                 transport = None

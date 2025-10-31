@@ -9,7 +9,7 @@ from pathlib import Path
 
 def generate_client(openapi_url: str | None = None) -> None:
     """Generate the OpenAPI client from the FastAPI service.
-    
+
     Args:
         openapi_url: URL to the OpenAPI specification. If None, will use
             environment variable OPENAPI_URL or default to localhost:8000.
@@ -18,15 +18,12 @@ def generate_client(openapi_url: str | None = None) -> None:
     if openapi_url is None:
         openapi_url = os.getenv("OPENAPI_URL", "http://localhost:8000/openapi.json")
 
-
     output_dir = Path(__file__).parent.parent / "src" / "openai_client_service_api_client"
-
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"Generating OpenAPI client from {openapi_url}")
     print(f"Output directory: {output_dir}")
-
 
     cmd = [
         sys.executable,
@@ -72,4 +69,3 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     generate_client(args.url)
-

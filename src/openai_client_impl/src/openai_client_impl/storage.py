@@ -45,6 +45,7 @@ def init_db() -> None:
     Path(".data").mkdir(parents=True, exist_ok=True)
     Base.metadata.create_all(_engine)
 
+
 def _fernet() -> Fernet:
     """Get Fernet instance for encryption/decryption.
 
@@ -61,6 +62,7 @@ def _fernet() -> Fernet:
     else:
         fernet_key = FERNET_KEY.encode() if isinstance(FERNET_KEY, str) else FERNET_KEY
     return Fernet(fernet_key)
+
 
 def set_openai_key(subject: str, api_key_plain: str) -> None:
     """Set the OpenAI API key for a subject, encrypting it before storage."""

@@ -7,8 +7,8 @@ detects this and routes requests in-process via httpx's ASGI transport.
 from __future__ import annotations
 
 import pytest
-from ai_adapter import AdapterAPIError, OpenAIServiceAdapter
 
+from openai_adapter import AdapterAPIError, OpenAIServiceAdapter
 
 pytestmark = pytest.mark.integration
 

@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from ai_service_api.response import Conversation, Response
+from openai_service_api.response import Conversation, Response
 
 __all__ = ["AIClient", "get_client"]
 
@@ -12,7 +12,10 @@ class AIClient(ABC):
 
     @abstractmethod
     def generate_response(
-        self, messages: list[str], *, conversation_id: str | None = None,
+        self,
+        messages: list[str],
+        *,
+        conversation_id: str | None = None,
     ) -> Response:
         """Generate a model response given messages and optional conversation ID.
 
@@ -92,4 +95,3 @@ def get_client(*, interactive: bool = False) -> AIClient:
 
     """
     raise NotImplementedError
-

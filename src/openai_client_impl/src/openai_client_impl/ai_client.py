@@ -48,7 +48,10 @@ class AIClientImpl:
         return OpenAI(api_key=key)
 
     def generate_response(
-        self, messages: list[str], *, conversation_id: str | None = None,
+        self,
+        messages: list[str],
+        *,
+        conversation_id: str | None = None,
     ) -> Response:
         """Generate a model response given messages and optional conversation ID.
 
@@ -69,10 +72,8 @@ class AIClientImpl:
             error_msg = "Messages list cannot be empty"
             raise ValueError(error_msg)
 
-        
         openai_messages: list[dict[str, str]] = [{"role": "user", "content": msg} for msg in messages]
 
-        
         if conversation_id:
             conv_data = get_conversation_data(conversation_id)
             if conv_data:
@@ -88,10 +89,8 @@ class AIClientImpl:
             error_msg = f"AI service failed to process request: {e}"
             raise RuntimeError(error_msg) from e
 
-
         content = resp.choices[0].message.content or ""
         tokens_used = resp.usage.total_tokens if resp.usage else 0
-
 
         if conversation_id:
             conv_data = get_conversation_data(conversation_id)
@@ -100,7 +99,6 @@ class AIClientImpl:
             else:
                 created_at = datetime.now(UTC).isoformat()
 
-            
             updated_messages = [*openai_messages, {"role": "assistant", "content": content}]
             save_conversation(
                 conv_id=conversation_id,
@@ -109,7 +107,6 @@ class AIClientImpl:
                 messages_json=json.dumps(updated_messages),
             )
         else:
-
             conversation_id = self.create_conversation()
             created_at = datetime.now(UTC).isoformat()
             updated_messages = [*openai_messages, {"role": "assistant", "content": content}]
@@ -193,4 +190,3 @@ class AIClientImpl:
             error_msg = f"Conversation not found: {conversation_id}"
             raise ValueError(error_msg)
         return deleted
-

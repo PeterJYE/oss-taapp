@@ -78,7 +78,9 @@ def get_response(content: str, tokens_used: int, conversation_id: str | None) ->
 
 
 def get_conversation(
-    conv_id: str, messages: list[tuple[str, str]], created_at: str,
+    conv_id: str,
+    messages: list[tuple[str, str]],
+    created_at: str,
 ) -> Conversation:
     """Return an instance of Conversation.
 
@@ -95,4 +97,3 @@ def get_conversation(
 
     """
     raise NotImplementedError
-

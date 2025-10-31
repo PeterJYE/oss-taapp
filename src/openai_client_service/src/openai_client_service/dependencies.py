@@ -1,9 +1,7 @@
 """FastAPI dependencies for OpenAI Client Service."""
 
-from typing import Optional
 
 from fastapi import Cookie, Header, HTTPException, status
-
 
 _SESSION_STORE: dict[str, dict[str, str]] = {}
 
@@ -29,7 +27,9 @@ async def get_subject(x_subject: str | None = Header(default=None)) -> str:
     return x_subject
 
 
-async def get_authenticated_subject(session_id: Optional[str] = Cookie(default=None, alias="session_id"), x_subject: str | None = Header(default=None)) -> str:
+async def get_authenticated_subject(
+    session_id: str | None = Cookie(default=None, alias="session_id"), x_subject: str | None = Header(default=None),
+) -> str:
     """Return the authenticated subject from the OAuth session cookie.
 
     Raises 401 if there is no valid session. Intended to replace the
@@ -39,7 +39,7 @@ async def get_authenticated_subject(session_id: Optional[str] = Cookie(default=N
         session = _SESSION_STORE.get(session_id)
         if session and "subject" in session:
             return session["subject"]
-    
+
     if x_subject:
         return x_subject
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")

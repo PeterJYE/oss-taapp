@@ -3,7 +3,7 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
-from openai_client_impl import init_db  
+from openai_client_impl import init_db
 
 from .routes import ai, oauth
 
@@ -17,13 +17,16 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+
 @app.on_event("startup")
 async def startup_event() -> None:
     """Initialize database on application startup."""
     init_db()
 
+
 app.include_router(oauth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(ai.router, prefix="/ai", tags=["AI Operations"])
+
 
 @app.get("/health")
 def health_check() -> dict[str, str]:

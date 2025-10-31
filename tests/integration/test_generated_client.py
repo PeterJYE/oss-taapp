@@ -14,11 +14,7 @@ def test_client_generation_is_available() -> None:
     from pathlib import Path
 
     generate_script = (
-        Path(__file__).parent.parent.parent
-        / "src"
-        / "openai_client_service_api_client"
-        / "scripts"
-        / "generate_client.py"
+        Path(__file__).parent.parent.parent / "src" / "openai_client_service_api_client" / "scripts" / "generate_client.py"
     )
 
     assert generate_script.exists(), "Generation script should exist"
@@ -28,14 +24,11 @@ def test_client_can_be_generated_from_test_service() -> None:
     """Test that the client can be generated from a running FastAPI service."""
     from openai_client_service.main import app  # type: ignore[import-untyped]
 
-
     test_client = TestClient(app)
-
 
     http_ok = 200
     response = test_client.get("/openapi.json")
     assert response.status_code == http_ok
-
 
     spec = response.json()
     assert "paths" in spec
@@ -51,12 +44,10 @@ def test_service_endpoints_accessible_via_test_client() -> None:
 
     test_client = TestClient(app)
 
-
     http_ok = 200
     response = test_client.get("/health")
     assert response.status_code == http_ok
     assert response.json() == {"status": "ok"}
-
 
     response = test_client.post(
         "/ai/chat",
@@ -79,17 +70,14 @@ def test_openapi_spec_structure() -> None:
     response = test_client.get("/openapi.json")
     spec = response.json()
 
-
     assert spec["openapi"].startswith("3.")
     assert "info" in spec
     assert "title" in spec["info"]
     assert "paths" in spec
     assert "components" in spec
 
-
     assert "components" in spec
     if "securitySchemes" in spec["components"]:
-
         pass
 
 
@@ -101,13 +89,11 @@ def test_all_endpoints_have_request_body_schemas() -> None:
     response = test_client.get("/openapi.json")
     spec = response.json()
 
-
     if "/ai/chat" in spec["paths"]:
         chat_spec = spec["paths"]["/ai/chat"]
         assert "post" in chat_spec
 
         assert "requestBody" in chat_spec["post"]
-
 
     if "/ai/embed" in spec["paths"]:
         embed_spec = spec["paths"]["/ai/embed"]
@@ -122,7 +108,6 @@ def test_service_handles_missing_subject_header() -> None:
 
     test_client = TestClient(app)
 
-
     response = test_client.post(
         "/ai/chat",
         json={
@@ -134,4 +119,3 @@ def test_service_handles_missing_subject_header() -> None:
     http_unauthorized = 401
     # Should return 401 Unauthorized
     assert response.status_code == http_unauthorized
-

@@ -6,12 +6,13 @@ adapter behavior without requiring the FastAPI service or OpenAI credentials.
 
 from __future__ import annotations
 
-import pytest
-import httpx
 import sys
 import types
 
-from ai_adapter import AdapterAPIError, OpenAIServiceAdapter
+import httpx
+import pytest
+
+from openai_adapter import AdapterAPIError, OpenAIServiceAdapter
 
 
 class DummyResp:
@@ -42,6 +43,7 @@ class DummyHTTP:
     def get(self, path: str) -> DummyResp:
         """Return the configured response for GET requests."""
         return self._resp
+
     def delete(self, path: str) -> DummyResp:
         """Return the configured response for DELETE requests."""
         return self._resp
@@ -50,16 +52,16 @@ class DummyHTTP:
 class ErroringHTTP:
     """HTTP stub that raises httpx.HTTPError for all methods."""
 
-    def __init__(self) -> None:  # noqa: D401 - trivial
+    def __init__(self) -> None:
         """Initialize."""
 
-    def post(self, path: str, json: dict[str, object] | None = None) -> DummyResp:  # noqa: ARG002
+    def post(self, path: str, json: dict[str, object] | None = None) -> DummyResp:
         raise httpx.HTTPError("boom")
 
-    def get(self, path: str) -> DummyResp:  # noqa: ARG002
+    def get(self, path: str) -> DummyResp:
         raise httpx.HTTPError("boom")
 
-    def delete(self, path: str) -> DummyResp:  # noqa: ARG002
+    def delete(self, path: str) -> DummyResp:
         raise httpx.HTTPError("boom")
 
 
@@ -160,7 +162,7 @@ def test_health_check_invalid_json_fallback() -> None:
     """health_check falls back to status when JSON parsing fails."""
 
     class BadJSONResp(DummyResp):
-        def json(self) -> dict[str, object]:  # noqa: D401 - override
+        def json(self) -> dict[str, object]:
             """Raise ValueError to simulate invalid JSON."""
             raise ValueError("bad json")
 
@@ -196,7 +198,7 @@ def test_constructor_uses_asgi_transport_when_testserver(monkeypatch: pytest.Mon
     called = {"count": 0}
 
     class DummyTransport:
-        def __init__(self, app: object) -> None:  # noqa: D401 - minimal stub
+        def __init__(self, app: object) -> None:
             called["count"] += 1
 
     monkeypatch.setattr(httpx, "ASGITransport", DummyTransport)

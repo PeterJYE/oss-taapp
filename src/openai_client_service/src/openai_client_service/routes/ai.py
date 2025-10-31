@@ -1,6 +1,5 @@
 """AI operation routes for OpenAI Client Service."""
 
-
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -93,7 +92,8 @@ def create_conversation(subject: Annotated[str, Depends(get_authenticated_subjec
 
 @router.get("/conversations/{conversation_id}")
 def get_conversation(
-    conversation_id: str, subject: Annotated[str, Depends(get_authenticated_subject)],
+    conversation_id: str,
+    subject: Annotated[str, Depends(get_authenticated_subject)],
 ) -> dict[str, str | list[tuple[str, str]]]:
     """Retrieve a conversation by its ID.
 
@@ -130,7 +130,9 @@ def get_conversation(
 
 
 @router.delete("/conversations/{conversation_id}")
-def delete_conversation(conversation_id: str, subject: Annotated[str, Depends(get_authenticated_subject)]) -> dict[str, str | bool]:
+def delete_conversation(
+    conversation_id: str, subject: Annotated[str, Depends(get_authenticated_subject)],
+) -> dict[str, str | bool]:
     """Delete a conversation and all its messages.
 
     Args:

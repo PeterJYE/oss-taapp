@@ -106,4 +106,3 @@ def get_conversation(conv_id: str, messages: list[tuple[str, str]], created_at: 
 
     """
     return Conversation(conv_id, messages, created_at)
-

@@ -23,7 +23,6 @@ from openai_client_service.dependencies import (
 router = APIRouter()
 
 
-
 _PENDING_STATE: dict[str, dict[str, int]] = {}
 
 
@@ -69,7 +68,9 @@ def oauth_login() -> Response:
 
 
 @router.get("/callback")
-def oauth_callback(request: Request, code: str | None = None, state: str | None = None, oauth_state: str | None = None) -> Response:
+def oauth_callback(
+    request: Request, code: str | None = None, state: str | None = None, oauth_state: str | None = None,
+) -> Response:
     """Handle OAuth2 callback, exchange code for tokens, and create a session."""
     cfg = _oauth_config()
     cookie_state = request.cookies.get("oauth_state") if oauth_state is None else oauth_state
@@ -83,9 +84,7 @@ def oauth_callback(request: Request, code: str | None = None, state: str | None 
         "client_id": cfg["client_id"],
     }
 
-    
     with httpx.Client(timeout=10.0) as client:
-        
         if cfg["client_secret"]:
             data_with_secret = {**data, "client_secret": cfg["client_secret"]}
         else:
@@ -111,7 +110,6 @@ def oauth_callback(request: Request, code: str | None = None, state: str | None 
     session_id = base64.urlsafe_b64encode(secrets.token_bytes(24)).decode().rstrip("=")
     _create_session(session_id, subject)
 
-    
     _PENDING_STATE.pop(state, None)
 
     response = RedirectResponse(url="/docs", status_code=status.HTTP_302_FOUND)
@@ -121,7 +119,6 @@ def oauth_callback(request: Request, code: str | None = None, state: str | None 
 
 
 def _extract_subject(token_json: dict[str, object], cfg: dict[str, str]) -> str | None:
-    
     access_token = token_json.get("access_token")
     if isinstance(access_token, str) and cfg.get("userinfo_url"):
         try:

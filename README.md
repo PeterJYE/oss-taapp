@@ -6,7 +6,7 @@ A FastAPI-based service that provides a secure, multi-user interface to OpenAI's
 
 This project implements a clean architecture with the following components:
 
-- **`ai_service_api`**: Abstract interfaces (`AIClient`, `Response`, `Conversation`)
+- **`openai_service_api`**: Abstract interfaces (`AIClient`, `Response`, `Conversation`)
 - **`openai_client_impl`**: Concrete OpenAI implementation with secure storage
 - **`openai_client_service`**: FastAPI service exposing the interface as HTTP endpoints
 - **`openai_client_service_api_client`**: Auto-generated client library
@@ -153,11 +153,11 @@ response = client.ai.generate_response(
 
 ## AI Adapter
 
-The `ai_adapter` package provides a thin, typed adapter for calling the running service from Python applications without pulling in the generated client. It handles base URL, headers, timeouts, and offers a simple API.
+The `openai_adapter` package provides a thin, typed adapter for calling the running service from Python applications without pulling in the generated client. It handles base URL, headers, timeouts, and offers a simple API.
 
 ### Where it lives
-- Code: `src/ai_adapter/src/ai_adapter/_adapter.py`
-- Tests: `src/ai_adapter/tests/test_adapter.py`
+- Code: `src/openai_adapter/src/openai_adapter/_adapter.py`
+- Tests: `src/openai_adapter/tests/test_adapter.py`
 
 
 
@@ -168,8 +168,8 @@ The `ai_adapter` package provides a thin, typed adapter for calling the running 
 ```
 oss-taapp/
 ├── src/
-│   ├── ai_adapter/              # Thin typed adapter for the service
-│   ├── ai_service_api/          # Abstract interfaces
+│   ├── openai_adapter/              # Thin typed adapter for the service
+│   ├── openai_service_api/          # Abstract interfaces
 │   ├── openai_client_impl/     # OpenAI implementation
 │   ├── openai_client_service/  # FastAPI service
 │   └── openai_client_service_api_client/  # Generated client
