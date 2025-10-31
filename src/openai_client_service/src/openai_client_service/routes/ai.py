@@ -131,7 +131,8 @@ def get_conversation(
 
 @router.delete("/conversations/{conversation_id}")
 def delete_conversation(
-    conversation_id: str, subject: Annotated[str, Depends(get_authenticated_subject)],
+    conversation_id: str,
+    subject: Annotated[str, Depends(get_authenticated_subject)],
 ) -> dict[str, str | bool]:
     """Delete a conversation and all its messages.
 

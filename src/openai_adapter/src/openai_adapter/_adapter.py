@@ -60,7 +60,7 @@ class OpenAIServiceAdapter:
             try:
                 from openai_client_service.main import app  # noqa: PLC0415 - lazy import for tests
 
-                transport = httpx.ASGITransport(app=app)  # type: ignore[arg-type]
+                transport = httpx.ASGITransport(app=app)  # type: ignore[arg-type,assignment]
             except ImportError:
                 transport = None
 
@@ -105,7 +105,8 @@ class OpenAIServiceAdapter:
             raise AdapterNetworkError(exc) from exc
         if r.status_code >= HTTP_BAD:
             raise AdapterAPIError(r.status_code, r.content)
-        return r.json()
+        data = r.json()
+        return dict(data)
 
     def delete_conversation(self, conversation_id: str) -> bool:
         """DELETE /ai/conversations/{id} -> returns ok boolean in body."""

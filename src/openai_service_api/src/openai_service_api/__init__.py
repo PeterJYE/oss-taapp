@@ -1,6 +1,5 @@
 """Public export surface for ``openai_service_api``."""
 
-from openai_service_api import response
 from openai_service_api.client import AIClient, get_client
 from openai_service_api.response import Conversation, Response, get_conversation, get_response
 
@@ -11,5 +10,4 @@ __all__ = [
     "get_client",
     "get_conversation",
     "get_response",
-    "response",
 ]

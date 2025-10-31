@@ -22,6 +22,9 @@ from openai_client_service.dependencies import (
 
 router = APIRouter()
 
+# Constants
+HTTP_BAD_REQUEST = 400
+JWT_PARTS_MIN = 2
 
 _PENDING_STATE: dict[str, dict[str, int]] = {}
 
@@ -69,7 +72,10 @@ def oauth_login() -> Response:
 
 @router.get("/callback")
 def oauth_callback(
-    request: Request, code: str | None = None, state: str | None = None, oauth_state: str | None = None,
+    request: Request,
+    code: str | None = None,
+    state: str | None = None,
+    oauth_state: str | None = None,
 ) -> Response:
     """Handle OAuth2 callback, exchange code for tokens, and create a session."""
     cfg = _oauth_config()
@@ -85,10 +91,7 @@ def oauth_callback(
     }
 
     with httpx.Client(timeout=10.0) as client:
-        if cfg["client_secret"]:
-            data_with_secret = {**data, "client_secret": cfg["client_secret"]}
-        else:
-            data_with_secret = data
+        data_with_secret = {**data, "client_secret": cfg["client_secret"]} if cfg["client_secret"] else data
         token_resp = client.post(
             cfg["token_url"],
             data=data_with_secret,
@@ -98,7 +101,7 @@ def oauth_callback(
             },
         )
 
-    if token_resp.status_code >= 400:
+    if token_resp.status_code >= HTTP_BAD_REQUEST:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Token exchange failed: {token_resp.text}")
 
     token_json = token_resp.json()
@@ -124,26 +127,26 @@ def _extract_subject(token_json: dict[str, object], cfg: dict[str, str]) -> str 
         try:
             with httpx.Client(timeout=10.0) as client:
                 ui = client.get(cfg["userinfo_url"], headers={"Authorization": f"Bearer {access_token}"})
-            if ui.status_code < 400:
+            if ui.status_code < HTTP_BAD_REQUEST:
                 data = ui.json()
                 sub = data.get("sub") or data.get("id")
                 if isinstance(sub, str) and sub:
                     return sub
-        except Exception:
+        except (httpx.HTTPError, ValueError, KeyError):
             pass
 
     # Fallback: decode id_token (without signature verification) to extract `sub`
     id_token = token_json.get("id_token")
     if isinstance(id_token, str):
         parts = id_token.split(".")
-        if len(parts) >= 2:
+        if len(parts) >= JWT_PARTS_MIN:
             try:
                 padded = parts[1] + "=" * (-len(parts[1]) % 4)
                 payload = json.loads(base64.urlsafe_b64decode(padded.encode()).decode())
                 sub_val = payload.get("sub")
                 if isinstance(sub_val, str) and sub_val:
                     return sub_val
-            except Exception:
+            except (ValueError, json.JSONDecodeError):
                 pass
     return None
 

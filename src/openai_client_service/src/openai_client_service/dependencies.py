@@ -1,6 +1,5 @@
 """FastAPI dependencies for OpenAI Client Service."""
 
-
 from fastapi import Cookie, Header, HTTPException, status
 
 _SESSION_STORE: dict[str, dict[str, str]] = {}
@@ -28,7 +27,8 @@ async def get_subject(x_subject: str | None = Header(default=None)) -> str:
 
 
 async def get_authenticated_subject(
-    session_id: str | None = Cookie(default=None, alias="session_id"), x_subject: str | None = Header(default=None),
+    session_id: str | None = Cookie(default=None, alias="session_id"),
+    x_subject: str | None = Header(default=None),
 ) -> str:
     """Return the authenticated subject from the OAuth session cookie.
 

@@ -16,7 +16,7 @@ pytestmark = pytest.mark.integration
 def test_adapter_end_to_end_against_app() -> None:
     """Start the FastAPI app and call it through the adapter using TestClient base URL."""
     try:
-        from fastapi.testclient import TestClient  # type: ignore
+        from fastapi.testclient import TestClient  # type: ignore[assignment]
     except Exception:  # pragma: no cover - environment-dependent
         pytest.skip("fastapi or testclient not installed in this environment")
 
@@ -32,7 +32,8 @@ def test_adapter_end_to_end_against_app() -> None:
 
     # conversation lifecycle
     conv_id = adapter.create_conversation()
-    assert isinstance(conv_id, str) and conv_id
+    assert isinstance(conv_id, str)
+    assert conv_id
 
     data = adapter.get_conversation(conv_id)
     assert data.get("id") == conv_id
@@ -40,6 +41,7 @@ def test_adapter_end_to_end_against_app() -> None:
     assert adapter.delete_conversation(conv_id) is True
 
     # generate without API key should raise 401
+    expected_status = 401
     with pytest.raises(AdapterAPIError) as ei:
         adapter.generate_response(["hello there"], conversation_id=None)
-    assert ei.value.status_code == 401
+    assert ei.value.status_code == expected_status
