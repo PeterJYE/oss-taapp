@@ -1,0 +1,16 @@
+[project]
+name = "openai-client-service"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "authlib",
+  "httpx",
+  "pydantic>=2",
+  "python-dotenv",
+  "openai-client-impl",
+]
+
+[tool.uv.sources]
+openai-client-impl = { workspace = true }
