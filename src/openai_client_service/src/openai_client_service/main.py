@@ -3,7 +3,7 @@
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
-from openai_client_impl import init_db
+from openai_client_impl import init_db  # type: ignore[attr-defined]
 
 from .routes import ai, oauth
 
@@ -18,7 +18,7 @@ app = FastAPI(
 )
 
 
-@app.on_event("startup")
+@app.on_event("startup")  # type: ignore[misc]
 async def startup_event() -> None:
     """Initialize database on application startup."""
     init_db()
@@ -28,7 +28,7 @@ app.include_router(oauth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(ai.router, prefix="/ai", tags=["AI Operations"])
 
 
-@app.get("/health")
+@app.get("/health")  # type: ignore[misc]
 def health_check() -> dict[str, str]:
     """Health check endpoint."""
     return {"status": "ok", "service": "openai-client-service"}

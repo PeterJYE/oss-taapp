@@ -1,7 +1,10 @@
 """Response and Conversation implementations for OpenAI client."""
 
+from openai_service_api.response import Conversation as ConversationABC
+from openai_service_api.response import Response as ResponseABC
 
-class Response:
+
+class Response(ResponseABC):
     """Concrete implementation of AI response."""
 
     def __init__(self, content: str, tokens_used: int, conversation_id: str | None = None) -> None:
@@ -33,7 +36,7 @@ class Response:
         return self._conversation_id
 
 
-class Conversation:
+class Conversation(ConversationABC):
     """Concrete implementation of a conversation."""
 
     def __init__(

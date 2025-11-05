@@ -4,8 +4,6 @@ from abc import ABC, abstractmethod
 
 from openai_service_api.response import Conversation, Response
 
-__all__ = ["AIClient", "get_client"]
-
 
 class AIClient(ABC):
     """Abstract base class for AI service operations."""

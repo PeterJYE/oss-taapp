@@ -3,25 +3,26 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
+from openai_service_api.client import AIClient
 from pydantic import BaseModel
 
-from openai_client_impl import AIClientImpl, MissingOpenAIKeyError
-from openai_client_service.dependencies import get_authenticated_subject
+from openai_client_impl import MissingOpenAIKeyError  # type: ignore[attr-defined]
+from openai_client_service.dependencies import get_ai_client
 
 router = APIRouter()
 
 
-class GenerateResponseRequest(BaseModel):
+class GenerateResponseRequest(BaseModel):  # type: ignore[misc]
     """Request model for generate response endpoint."""
 
     messages: list[str]
     conversation_id: str | None = None
 
 
-@router.post("/generate-response")
+@router.post("/generate-response")  # type: ignore[misc]
 def generate_response(
     request: GenerateResponseRequest,
-    subject: Annotated[str, Depends(get_authenticated_subject)],
+    aiclient: Annotated[AIClient, Depends(get_ai_client)],
 ) -> dict[str, str | int | None]:
     """Generate a model response using the abstract AIClient interface.
 
@@ -30,7 +31,7 @@ def generate_response(
 
     Args:
         request: Generate response request with messages and optional conversation ID
-        subject: User subject from OAuth session
+        aiclient: AI client instance for the authenticated user (injected via dependency)
 
     Returns:
         Response with content, tokens_used, and conversation_id
@@ -40,7 +41,6 @@ def generate_response(
 
     """
     try:
-        aiclient = AIClientImpl(subject=subject)
         response = aiclient.generate_response(request.messages, conversation_id=request.conversation_id)
     except MissingOpenAIKeyError as e:
         raise HTTPException(
@@ -62,9 +62,12 @@ def generate_response(
         }
 
 
-@router.post("/conversations")
-def create_conversation(subject: Annotated[str, Depends(get_authenticated_subject)]) -> dict[str, str]:
+@router.post("/conversations")  # type: ignore[misc]
+def create_conversation(aiclient: Annotated[AIClient, Depends(get_ai_client)]) -> dict[str, str]:
     """Create a new conversation and return its ID.
+
+    Args:
+        aiclient: AI client instance for the authenticated user (injected via dependency)
 
     Returns:
         Conversation ID for the newly created conversation
@@ -74,7 +77,6 @@ def create_conversation(subject: Annotated[str, Depends(get_authenticated_subjec
 
     """
     try:
-        aiclient = AIClientImpl(subject=subject)
         conv_id = aiclient.create_conversation()
     except MissingOpenAIKeyError as e:
         raise HTTPException(
@@ -90,16 +92,16 @@ def create_conversation(subject: Annotated[str, Depends(get_authenticated_subjec
         return {"conversation_id": conv_id}
 
 
-@router.get("/conversations/{conversation_id}")
+@router.get("/conversations/{conversation_id}")  # type: ignore[misc]
 def get_conversation(
     conversation_id: str,
-    subject: Annotated[str, Depends(get_authenticated_subject)],
+    aiclient: Annotated[AIClient, Depends(get_ai_client)],
 ) -> dict[str, str | list[tuple[str, str]]]:
     """Retrieve a conversation by its ID.
 
     Args:
         conversation_id: The unique identifier of the conversation
-        subject: User subject from OAuth session
+        aiclient: AI client instance for the authenticated user (injected via dependency)
 
     Returns:
         Conversation object with messages and metadata
@@ -109,7 +111,6 @@ def get_conversation(
 
     """
     try:
-        aiclient = AIClientImpl(subject=subject)
         conversation = aiclient.get_conversation(conversation_id)
     except MissingOpenAIKeyError as e:
         raise HTTPException(
@@ -129,16 +130,16 @@ def get_conversation(
         }
 
 
-@router.delete("/conversations/{conversation_id}")
+@router.delete("/conversations/{conversation_id}")  # type: ignore[misc]
 def delete_conversation(
     conversation_id: str,
-    subject: Annotated[str, Depends(get_authenticated_subject)],
+    aiclient: Annotated[AIClient, Depends(get_ai_client)],
 ) -> dict[str, str | bool]:
     """Delete a conversation and all its messages.
 
     Args:
         conversation_id: The unique identifier of the conversation
-        subject: User subject from OAuth session
+        aiclient: AI client instance for the authenticated user (injected via dependency)
 
     Returns:
         Success status
@@ -148,7 +149,6 @@ def delete_conversation(
 
     """
     try:
-        aiclient = AIClientImpl(subject=subject)
         success = aiclient.delete_conversation(conversation_id)
     except MissingOpenAIKeyError as e:
         raise HTTPException(

@@ -1,4 +1,10 @@
-"""Secure storage for OpenAI API keys and conversation data using SQLAlchemy and Fernet encryption."""
+"""Secure storage for OpenAI API keys and conversation data using SQLAlchemy and Fernet encryption.
+
+This module provides database persistence functionality as an internal implementation detail
+of the openai_client_impl component. The database logic is encapsulated within this component
+and does not leak into the abstract port (openai_service_api).
+
+"""
 
 from __future__ import annotations
 
@@ -16,7 +22,7 @@ _engine = create_engine(DATABASE_URL, echo=False, future=True)
 SessionLocal = sessionmaker(bind=_engine, expire_on_commit=False)
 
 
-class Base(DeclarativeBase):
+class Base(DeclarativeBase):  # type: ignore[misc]
     """Base class for SQLAlchemy models."""
 
 
@@ -84,7 +90,8 @@ def get_openai_key(subject: str) -> str | None:
         if not row or not row.openai_api_key_enc:
             return None
         f = _fernet()
-        return f.decrypt(row.openai_api_key_enc.encode()).decode()
+        decrypted_bytes: bytes = f.decrypt(row.openai_api_key_enc.encode())
+        return decrypted_bytes.decode()
 
 
 def save_conversation(

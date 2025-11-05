@@ -33,13 +33,17 @@ def test_client_can_be_generated_from_test_service() -> None:
     spec = response.json()
     assert "paths" in spec
     assert "/health" in spec["paths"]
-    assert "/ai/chat" in spec["paths"]
-    assert "/ai/embed" in spec["paths"]
+    assert "/ai/generate-response" in spec["paths"]
+    assert "/ai/conversations" in spec["paths"]
     assert "/auth/set-openai-key" in spec["paths"]
 
 
 def test_service_endpoints_accessible_via_test_client() -> None:
     """Test that we can interact with the service via the test client."""
+    import base64
+    import secrets
+
+    from openai_client_service.dependencies import _create_session
     from openai_client_service.main import app  # type: ignore[import-untyped]
 
     test_client = TestClient(app)
@@ -49,17 +53,24 @@ def test_service_endpoints_accessible_via_test_client() -> None:
     assert response.status_code == http_ok
     assert response.json() == {"status": "ok"}
 
-    response = test_client.post(
-        "/ai/chat",
-        json={
-            "messages": [{"role": "user", "content": "Hello!"}],
-            "model": "gpt-4o-mini",
-        },
-        headers={"X-Subject": "test-user"},
-    )
+    # Create a test session for authentication
+    test_subject = "test-user"
+    session_id = base64.urlsafe_b64encode(secrets.token_bytes(24)).decode().rstrip("=")
+    _create_session(session_id, test_subject)
 
-    assert response.status_code in [200, 401, 400]
-    assert "error" in response.json() or "OpenAI API key" in response.json()["hint"]
+    http_bad_request = 400
+    http_unauthorized = 401
+    response = test_client.post(
+        "/ai/generate-response",
+        json={
+            "messages": ["Hello!"],
+            "conversation_id": None,
+        },
+        cookies={"session_id": session_id},
+    )
+    assert response.status_code in [http_ok, http_unauthorized, http_bad_request]
+    if response.status_code == http_unauthorized:
+        assert "error" in response.json() or "OpenAI API key" in response.json().get("hint", "")
 
 
 def test_openapi_spec_structure() -> None:
@@ -89,33 +100,33 @@ def test_all_endpoints_have_request_body_schemas() -> None:
     response = test_client.get("/openapi.json")
     spec = response.json()
 
-    if "/ai/chat" in spec["paths"]:
-        chat_spec = spec["paths"]["/ai/chat"]
-        assert "post" in chat_spec
+    if "/ai/generate-response" in spec["paths"]:
+        generate_spec = spec["paths"]["/ai/generate-response"]
+        assert "post" in generate_spec
 
-        assert "requestBody" in chat_spec["post"]
+        assert "requestBody" in generate_spec["post"]
 
-    if "/ai/embed" in spec["paths"]:
-        embed_spec = spec["paths"]["/ai/embed"]
-        assert "post" in embed_spec
+    if "/ai/conversations" in spec["paths"]:
+        conversations_spec = spec["paths"]["/ai/conversations"]
+        assert "post" in conversations_spec
 
-        assert "requestBody" in embed_spec["post"]
+        assert "requestBody" in conversations_spec.get("post", {})
 
 
-def test_service_handles_missing_subject_header() -> None:
-    """Test that the service properly validates the X-Subject header."""
+def test_service_handles_missing_session() -> None:
+    """Test that the service properly validates the session cookie."""
     from openai_client_service.main import app  # type: ignore[import-untyped]
 
     test_client = TestClient(app)
 
     response = test_client.post(
-        "/ai/chat",
+        "/ai/generate-response",
         json={
-            "messages": [{"role": "user", "content": "Hello!"}],
-            "model": "gpt-4o-mini",
+            "messages": ["Hello!"],
+            "conversation_id": None,
         },
     )
 
     http_unauthorized = 401
-    # Should return 401 Unauthorized
+    # Should return 401 Unauthorized when no session cookie is provided
     assert response.status_code == http_unauthorized

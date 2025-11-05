@@ -6,6 +6,9 @@ detects this and routes requests in-process via httpx's ASGI transport.
 
 from __future__ import annotations
 
+import base64
+import secrets
+
 import pytest
 
 from openai_adapter import AdapterAPIError, OpenAIServiceAdapter
@@ -20,12 +23,18 @@ def test_adapter_end_to_end_against_app() -> None:
     except Exception:  # pragma: no cover - environment-dependent
         pytest.skip("fastapi or testclient not installed in this environment")
 
+    from openai_client_service.dependencies import _create_session
     from openai_client_service.main import app  # type: ignore[import-untyped]
 
     test_client = TestClient(app)
     base_url = str(test_client.base_url)
 
-    adapter = OpenAIServiceAdapter(base_url=base_url, subject="it-user")
+    # Create a test session for authentication
+    test_subject = "it-user"
+    session_id = base64.urlsafe_b64encode(secrets.token_bytes(24)).decode().rstrip("=")
+    _create_session(session_id, test_subject)
+
+    adapter = OpenAIServiceAdapter(base_url=base_url, session_id=session_id)
 
     # health should be OK
     assert adapter.health_check() is True

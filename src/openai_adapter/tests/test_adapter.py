@@ -12,7 +12,7 @@ import types
 import httpx
 import pytest
 
-from openai_adapter import AdapterAPIError, OpenAIServiceAdapter
+from openai_adapter import AdapterAPIError, OpenAIServiceAdapter  # type: ignore[attr-defined]
 
 
 class DummyResp:
@@ -74,7 +74,7 @@ class ErroringHTTP:
 def test_create_conversation_success() -> None:
     """create_conversation returns conversation_id on 200."""
     resp = DummyResp(status_code=200, json_data={"conversation_id": "abc"})
-    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="test-session-1")
     adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined,assignment]
     assert adapter.create_conversation() == "abc"
 
@@ -82,7 +82,7 @@ def test_create_conversation_success() -> None:
 def test_generate_response_api_error_unauthorized() -> None:
     """generate_response raises AdapterAPIError on 401 without API key."""
     resp = DummyResp(status_code=401, content=b"Missing API key")
-    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="test-session-1")
     adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined,assignment]
     with pytest.raises(AdapterAPIError):
         adapter.generate_response(["hello"])  # no API key -> expect 401
@@ -92,7 +92,7 @@ def test_get_conversation_success() -> None:
     """get_conversation returns dict when 200."""
     conv: dict[str, object] = {"id": "abc", "messages": [["user", "hi"]]}
     resp = DummyResp(status_code=200, json_data=conv)
-    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="test-session-1")
     adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined,assignment]
     data = adapter.get_conversation("abc")
     assert data["id"] == "abc"
@@ -101,7 +101,7 @@ def test_get_conversation_success() -> None:
 def test_delete_conversation_success() -> None:
     """delete_conversation returns True on ok."""
     resp = DummyResp(status_code=200, json_data={"ok": True})
-    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="test-session-1")
     adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined,assignment]
     assert adapter.delete_conversation("abc") is True
 
@@ -109,7 +109,7 @@ def test_delete_conversation_success() -> None:
 def test_delete_conversation_default_true_when_no_body() -> None:
     """delete_conversation returns True when body is empty (default ok)."""
     resp = DummyResp(status_code=200, json_data={}, content=b"")
-    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="test-session-1")
     adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined,assignment]
     assert adapter.delete_conversation("abc") is True
 
@@ -117,7 +117,7 @@ def test_delete_conversation_default_true_when_no_body() -> None:
 def test_create_conversation_api_error() -> None:
     """create_conversation raises AdapterAPIError on non-2xx."""
     resp = DummyResp(status_code=500, json_data={})
-    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="test-session-1")
     adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined,assignment]
     with pytest.raises(AdapterAPIError):
         adapter.create_conversation()
@@ -126,7 +126,7 @@ def test_create_conversation_api_error() -> None:
 def test_get_conversation_api_error() -> None:
     """get_conversation raises AdapterAPIError on non-2xx."""
     resp = DummyResp(status_code=404, json_data={})
-    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="test-session-1")
     adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined,assignment]
     with pytest.raises(AdapterAPIError):
         adapter.get_conversation("abc")
@@ -135,7 +135,7 @@ def test_get_conversation_api_error() -> None:
 def test_delete_conversation_api_error() -> None:
     """delete_conversation raises AdapterAPIError on non-2xx."""
     resp = DummyResp(status_code=400, json_data={})
-    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="test-session-1")
     adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined,assignment]
     with pytest.raises(AdapterAPIError):
         adapter.delete_conversation("abc")
@@ -144,14 +144,14 @@ def test_delete_conversation_api_error() -> None:
 def test_health_check_true_on_ok_status() -> None:
     """health_check returns True when status is ok."""
     resp = DummyResp(status_code=200, json_data={"status": "ok"})
-    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="test-session-1")
     adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined,assignment]
     assert adapter.health_check() is True
 
 
 def test_health_check_http_error_returns_false() -> None:
     """health_check returns False when httpx raises."""
-    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="test-session-1")
     adapter._http = ErroringHTTP()  # type: ignore[attr-defined,assignment]
     assert adapter.health_check() is False
 
@@ -159,7 +159,7 @@ def test_health_check_http_error_returns_false() -> None:
 def test_health_check_non_2xx_returns_false() -> None:
     """health_check returns False on non-2xx status."""
     resp = DummyResp(status_code=500, json_data={})
-    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="test-session-1")
     adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined,assignment]
     assert adapter.health_check() is False
 
@@ -174,20 +174,26 @@ def test_health_check_invalid_json_fallback() -> None:
             raise ValueError(msg)
 
     resp = BadJSONResp(status_code=200, json_data={})
-    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="test-session-1")
     adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined,assignment]
     assert adapter.health_check() is True
 
 
 def test_constructor_allows_testserver_without_fastapi() -> None:
     """Constructing with testserver base_url should not error even without fastapi."""
-    OpenAIServiceAdapter(base_url="http://testserver", subject="user1")
+    OpenAIServiceAdapter(base_url="http://testserver", session_id="test-session-1")
 
 
 def test_init_raises_on_empty_base_url() -> None:
     """Constructor should raise ValueError when base_url is empty."""
     with pytest.raises(ValueError, match="base_url is required"):
-        OpenAIServiceAdapter(base_url="", subject="user1")
+        OpenAIServiceAdapter(base_url="", session_id="test-session-1")
+
+
+def test_init_raises_on_empty_session_id() -> None:
+    """Constructor should raise ValueError when session_id is empty."""
+    with pytest.raises(ValueError, match="session_id is required"):
+        OpenAIServiceAdapter(base_url="http://example.com", session_id="")
 
 
 def test_constructor_uses_asgi_transport_when_testserver(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -210,13 +216,13 @@ def test_constructor_uses_asgi_transport_when_testserver(monkeypatch: pytest.Mon
 
     monkeypatch.setattr(httpx, "ASGITransport", DummyTransport)
 
-    OpenAIServiceAdapter(base_url="http://testserver", subject="user1")
+    OpenAIServiceAdapter(base_url="http://testserver", session_id="test-session-1")
     assert called["count"] == 1
 
 
 def test_generate_response_network_error_raises() -> None:
     """generate_response raises AdapterNetworkError when httpx errors."""
-    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="test-session-1")
     adapter._http = ErroringHTTP()  # type: ignore[attr-defined,assignment]
     with pytest.raises(AdapterAPIError.__mro__[1]):  # AdapterNetworkError subclass of AdapterError
         adapter.generate_response(["hi"])  # type: ignore[arg-type]
@@ -227,7 +233,7 @@ def test_generate_response_success() -> None:
     expected_tokens = 10
     payload = {"content": "ok", "tokens_used": expected_tokens, "conversation_id": "c1"}
     resp = DummyResp(status_code=200, json_data=payload)
-    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="test-session-1")
     adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined,assignment]
     out = adapter.generate_response(["hi"])  # type: ignore[arg-type]
     assert out["content"] == "ok"
@@ -237,7 +243,7 @@ def test_generate_response_success() -> None:
 
 def test_create_conversation_network_error_raises() -> None:
     """create_conversation raises AdapterNetworkError when httpx errors."""
-    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="test-session-1")
     adapter._http = ErroringHTTP()  # type: ignore[attr-defined,assignment]
     with pytest.raises(AdapterAPIError.__mro__[1]):
         adapter.create_conversation()
@@ -245,7 +251,7 @@ def test_create_conversation_network_error_raises() -> None:
 
 def test_get_conversation_network_error_raises() -> None:
     """get_conversation raises AdapterNetworkError when httpx errors."""
-    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="test-session-1")
     adapter._http = ErroringHTTP()  # type: ignore[attr-defined,assignment]
     with pytest.raises(AdapterAPIError.__mro__[1]):
         adapter.get_conversation("abc")
@@ -253,7 +259,7 @@ def test_get_conversation_network_error_raises() -> None:
 
 def test_delete_conversation_network_error_raises() -> None:
     """delete_conversation raises AdapterNetworkError when httpx errors."""
-    adapter = OpenAIServiceAdapter(base_url="http://example.com", subject="user1")
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="test-session-1")
     adapter._http = ErroringHTTP()  # type: ignore[attr-defined,assignment]
     with pytest.raises(AdapterAPIError.__mro__[1]):
         adapter.delete_conversation("abc")

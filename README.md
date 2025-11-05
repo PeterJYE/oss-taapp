@@ -78,8 +78,11 @@ Open a browser and complete the provider login. A `session_id` cookie will be se
 ```bash
 curl -X POST http://localhost:8000/auth/set-openai-key \
   -H "Content-Type: application/json" \
-  -d '{"subject": "user123", "api_key": "sk-your-openai-key"}'
+  --cookie "session_id=YOUR_SESSION_ID" \
+  -d '{"api_key": "sk-your-openai-key"}'
 ```
+
+Note: The endpoint requires authentication via session cookie. Users can only set their own API key.
 
 ### 3. Create Conversation
 ```bash

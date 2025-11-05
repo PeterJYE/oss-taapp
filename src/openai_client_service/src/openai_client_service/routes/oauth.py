@@ -1,7 +1,6 @@
 """Authentication routes for OpenAI Client Service."""
 
 import base64
-import json
 import os
 import secrets
 import time
@@ -13,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
-from openai_client_impl import set_openai_key
+from openai_client_impl import set_openai_key  # type: ignore[attr-defined]
 from openai_client_service.dependencies import (
     _create_session,
     _destroy_session,
@@ -24,7 +23,6 @@ router = APIRouter()
 
 # Constants
 HTTP_BAD_REQUEST = 400
-JWT_PARTS_MIN = 2
 
 _PENDING_STATE: dict[str, dict[str, int]] = {}
 
@@ -50,7 +48,7 @@ def _oauth_config() -> dict[str, str]:
     }
 
 
-@router.get("/login")
+@router.get("/login")  # type: ignore[misc]
 def oauth_login() -> Response:
     """Start OAuth2 Authorization Code flow by redirecting to provider."""
     cfg = _oauth_config()
@@ -70,7 +68,7 @@ def oauth_login() -> Response:
     return response
 
 
-@router.get("/callback")
+@router.get("/callback")  # type: ignore[misc]
 def oauth_callback(
     request: Request,
     code: str | None = None,
@@ -122,62 +120,69 @@ def oauth_callback(
 
 
 def _extract_subject(token_json: dict[str, object], cfg: dict[str, str]) -> str | None:
-    access_token = token_json.get("access_token")
-    if isinstance(access_token, str) and cfg.get("userinfo_url"):
-        try:
-            with httpx.Client(timeout=10.0) as client:
-                ui = client.get(cfg["userinfo_url"], headers={"Authorization": f"Bearer {access_token}"})
-            if ui.status_code < HTTP_BAD_REQUEST:
-                data = ui.json()
-                sub = data.get("sub") or data.get("id")
-                if isinstance(sub, str) and sub:
-                    return sub
-        except (httpx.HTTPError, ValueError, KeyError):
-            pass
+    """Extract subject from OAuth token response.
 
-    # Fallback: decode id_token (without signature verification) to extract `sub`
-    id_token = token_json.get("id_token")
-    if isinstance(id_token, str):
-        parts = id_token.split(".")
-        if len(parts) >= JWT_PARTS_MIN:
-            try:
-                padded = parts[1] + "=" * (-len(parts[1]) % 4)
-                payload = json.loads(base64.urlsafe_b64decode(padded.encode()).decode())
-                sub_val = payload.get("sub")
-                if isinstance(sub_val, str) and sub_val:
-                    return sub_val
-            except (ValueError, json.JSONDecodeError):
-                pass
+    Uses the userinfo endpoint with the access token to securely retrieve
+    the user's subject. The access token is validated by the OAuth provider.
+
+    Returns:
+        Subject string if found, None otherwise
+
+    Raises:
+        None - returns None on any error to allow caller to handle gracefully
+
+    """
+    access_token = token_json.get("access_token")
+    if not isinstance(access_token, str) or not cfg.get("userinfo_url"):
+        return None
+
+    try:
+        with httpx.Client(timeout=10.0) as client:
+            ui = client.get(cfg["userinfo_url"], headers={"Authorization": f"Bearer {access_token}"})
+        if ui.status_code < HTTP_BAD_REQUEST:
+            data = ui.json()
+            sub = data.get("sub") or data.get("id")
+            if isinstance(sub, str) and sub:
+                return sub
+    except (httpx.HTTPError, ValueError, KeyError):
+        pass
+
+    # Do not decode id_token without signature verification - this would allow
+    # an attacker to forge tokens and impersonate any user. Only use the
+    # validated access_token via the userinfo endpoint.
     return None
 
 
-class SetKeyRequest(BaseModel):
+class SetKeyRequest(BaseModel):  # type: ignore[misc]
     """Request model for setting OpenAI API key."""
 
-    subject: str
     api_key: str
 
 
-@router.post("/set-openai-key")
-def set_openai_key_endpoint(request: SetKeyRequest) -> dict[str, str | bool]:
+@router.post("/set-openai-key")  # type: ignore[misc]
+def set_openai_key_endpoint(
+    request: SetKeyRequest,
+    subject: Annotated[str, Depends(get_authenticated_subject)],
+) -> dict[str, str | bool]:
     """Store/replace the per-user OpenAI API key securely.
 
     The implementation handles encryption of the API key before storage.
-    This endpoint satisfies the OAuth/credentials requirement by allowing
-    users to securely provide their OpenAI API credentials.
+    This endpoint requires authentication - users can only set their own API key.
+    The subject is derived from the authenticated session.
 
     Args:
-        request: Contains subject (user ID) and OpenAI API key
+        request: Contains OpenAI API key
+        subject: Authenticated user subject from session (injected via dependency)
 
     Returns:
         Success confirmation with subject
 
     Raises:
-        HTTPException: If API key storage fails
+        HTTPException: If API key storage fails or user is not authenticated
 
     """
     try:
-        set_openai_key(request.subject, request.api_key)
+        set_openai_key(subject, request.api_key)
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -186,12 +191,12 @@ def set_openai_key_endpoint(request: SetKeyRequest) -> dict[str, str | bool]:
     else:
         return {
             "ok": True,
-            "subject": request.subject,
+            "subject": subject,
             "message": "OpenAI API key stored securely",
         }
 
 
-@router.post("/logout")
+@router.post("/logout")  # type: ignore[misc]
 def logout(request: Request) -> Response:
     """Clear session cookie and remove server-side session."""
     sid = request.cookies.get("session_id")
@@ -202,7 +207,7 @@ def logout(request: Request) -> Response:
     return response
 
 
-@router.get("/whoami")
+@router.get("/whoami")  # type: ignore[misc]
 def whoami(subject: Annotated[str, Depends(get_authenticated_subject)]) -> dict[str, str]:
     """Return the authenticated subject derived from the OAuth session."""
     return {"subject": subject}
