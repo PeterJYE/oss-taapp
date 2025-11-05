@@ -4,7 +4,14 @@ import json
 import uuid
 from datetime import UTC, datetime
 
-from openai import OpenAI
+from openai import (
+    OpenAI,
+    APIConnectionError,
+    APIError,
+    AuthenticationError,
+    BadRequestError,
+    RateLimitError,
+)
 
 from openai_client_impl.errors import MissingOpenAIKeyError
 from openai_client_impl.response import Conversation, Response, get_conversation, get_response
@@ -85,9 +92,26 @@ class AIClientImpl:
                 model=DEFAULT_MODEL,
                 messages=openai_messages,  # type: ignore[arg-type]
             )
-        except Exception as e:
-            error_msg = f"AI service failed to process request: {e}"
-            raise RuntimeError(error_msg) from e
+        except AuthenticationError:
+            # Do not expose raw exception details (could leak secrets)
+            error_msg = "OpenAI authentication failed. Please set a valid API key."
+            raise RuntimeError(error_msg) from None
+        except RateLimitError:
+            error_msg = "OpenAI rate limit exceeded. Please try again later."
+            raise RuntimeError(error_msg) from None
+        except APIConnectionError:
+            error_msg = "Network error communicating with OpenAI API."
+            raise RuntimeError(error_msg) from None
+        except BadRequestError:
+            error_msg = "Invalid request sent to OpenAI API."
+            raise RuntimeError(error_msg) from None
+        except APIError:
+            error_msg = "OpenAI API error occurred while processing the request."
+            raise RuntimeError(error_msg) from None
+        except Exception:
+            # Fallback: keep message generic to avoid leaking internal details
+            error_msg = "AI service failed to process request."
+            raise RuntimeError(error_msg) from None
 
         content = resp.choices[0].message.content or ""
         tokens_used = resp.usage.total_tokens if resp.usage else 0
