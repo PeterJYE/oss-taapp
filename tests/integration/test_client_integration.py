@@ -91,10 +91,10 @@ def test_adapter_service_integration() -> None:  # noqa: C901
     pytest.importorskip("adapter.service_client_adapter")
 
     from fastapi.testclient import TestClient  # noqa: PLC0415
-    from mail_client_service.main import get_client_dep  # noqa: PLC0415
 
     from adapter.service_client_adapter import ServiceClientAdapter  # noqa: PLC0415
     from mail_client_service import app as mail_app  # noqa: PLC0415
+    from mail_client_service.main import get_client_dep  # noqa: PLC0415
 
     mail_app.dependency_overrides[get_client_dep] = lambda: dummy
 
@@ -146,7 +146,6 @@ def test_dependency_injection_works() -> None:
 def test_message_dependency_injection() -> None:
     """Tests that importing gmail_message_impl overrides message.get_message."""
     from gmail_client_impl.message_impl import get_message  # noqa: PLC0415
-
     from mail_client_api.message import get_message as get_message_contract  # noqa: PLC0415
 
     assert get_message_contract is get_message

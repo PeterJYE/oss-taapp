@@ -15,7 +15,6 @@ from urllib.parse import urlparse
 
 import httpx
 
-
 HTTP_OK = 200
 HTTP_BAD = 400
 

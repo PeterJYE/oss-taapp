@@ -49,6 +49,7 @@ def client() -> object:
     """Create a test client."""
     pytest.importorskip("fastapi")
     from fastapi.testclient import TestClient  # noqa: PLC0415
+
     from mail_client_service.main import app  # noqa: PLC0415
 
     return TestClient(app)

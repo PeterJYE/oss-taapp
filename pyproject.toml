@@ -43,7 +43,18 @@ ignore = [
   "COM812",  # Trailing comma - conflicts with formatter behavior
 ]
 [tool.ruff.lint.per-file-ignores]
-"**/test_*.py" = ["S101", "ANN401", "ARG001"]
+"**/test_*.py" = [
+  "S101",
+  "ANN401",
+  "ARG001",
+  "SLF001",  # allow private member access in tests (stubbing/mocking)
+  "D102",    # missing method docstrings are fine in test stubs
+  "EM101",   # allow simple exception literals in tests
+  "PT011",   # broad raises context without match is acceptable in tests
+  "PT018",   # combined assertions acceptable in tests
+  "ARG002",  # unused args in test doubles
+  "TRY003",  # allow inline exception messages in tests
+]
 "src/generated_client/**/*.py" = ["UP007", "F401"]
 
 [tool.mypy]

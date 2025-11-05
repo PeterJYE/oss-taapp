@@ -22,6 +22,7 @@ def test_client_generation_is_available() -> None:
 def test_client_can_be_generated_from_test_service() -> None:
     """Test that the client can be generated from a running FastAPI service."""
     from fastapi.testclient import TestClient  # noqa: PLC0415
+
     from openai_client_service.main import app  # noqa: PLC0415  # type: ignore[import-untyped]
 
     test_client = TestClient(app)
@@ -44,6 +45,7 @@ def test_service_endpoints_accessible_via_test_client() -> None:
     import secrets  # noqa: PLC0415
 
     from fastapi.testclient import TestClient  # noqa: PLC0415
+
     from openai_client_service.dependencies import _create_session  # noqa: PLC0415
     from openai_client_service.main import app  # noqa: PLC0415  # type: ignore[import-untyped]
 
@@ -76,6 +78,7 @@ def test_service_endpoints_accessible_via_test_client() -> None:
 def test_openapi_spec_structure() -> None:
     """Test that the OpenAPI spec has the expected structure for client generation."""
     from fastapi.testclient import TestClient  # noqa: PLC0415
+
     from openai_client_service.main import app  # noqa: PLC0415  # type: ignore[import-untyped]
 
     test_client = TestClient(app)
@@ -96,6 +99,7 @@ def test_openapi_spec_structure() -> None:
 def test_all_endpoints_have_request_body_schemas() -> None:
     """Test that POST endpoints have properly documented request bodies."""
     from fastapi.testclient import TestClient  # noqa: PLC0415
+
     from openai_client_service.main import app  # noqa: PLC0415  # type: ignore[import-untyped]
 
     test_client = TestClient(app)
@@ -118,6 +122,7 @@ def test_all_endpoints_have_request_body_schemas() -> None:
 def test_service_handles_missing_session() -> None:
     """Test that the service properly validates the session cookie."""
     from fastapi.testclient import TestClient  # noqa: PLC0415
+
     from openai_client_service.main import app  # noqa: PLC0415  # type: ignore[import-untyped]
 
     test_client = TestClient(app)

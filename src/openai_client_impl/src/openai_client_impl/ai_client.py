@@ -5,11 +5,11 @@ import uuid
 from datetime import UTC, datetime
 
 from openai import (
-    OpenAI,
     APIConnectionError,
     APIError,
     AuthenticationError,
     BadRequestError,
+    OpenAI,
     RateLimitError,
 )
 
@@ -54,7 +54,7 @@ class AIClientImpl:
             raise MissingOpenAIKeyError(error_msg)
         return OpenAI(api_key=key)
 
-    def generate_response(
+    def generate_response(  # noqa: C901, PLR0912 - acceptable complexity given explicit error handling paths
         self,
         messages: list[str],
         *,
@@ -108,7 +108,7 @@ class AIClientImpl:
         except APIError:
             error_msg = "OpenAI API error occurred while processing the request."
             raise RuntimeError(error_msg) from None
-        except Exception:
+        except Exception:  # noqa: BLE001 - final safety net with generic message to avoid leaking details
             # Fallback: keep message generic to avoid leaking internal details
             error_msg = "AI service failed to process request."
             raise RuntimeError(error_msg) from None
