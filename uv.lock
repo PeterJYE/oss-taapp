@@ -1863,11 +1863,6 @@ dev = [
     { name = "types-requests" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "pytest-cov" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "google-api-python-client-stubs", marker = "extra == 'dev'", specifier = ">=1.30.0" },
@@ -1882,9 +1877,6 @@ requires-dist = [
     { name = "types-requests", marker = "extra == 'dev'", specifier = ">=2.32.4.20250611" },
 ]
 provides-extras = ["dev"]
-
-[package.metadata.requires-dev]
-dev = [{ name = "pytest-cov", specifier = ">=7.0.0" }]
 
 [[package]]
 name = "tomli"

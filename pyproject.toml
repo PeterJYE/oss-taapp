@@ -40,9 +40,11 @@ select = ["ALL"]
 ignore = [
   "D203",  # 'incorrect-blank-line-before-class' (D203) and 'no-blank-line-before-class' (D211) are conflicting
   "D213",  # 'multi-line-summary-first-line' (D212) and 'multi-line-summary-second-line' (D213) are conflicting
-  "S101",  # Use of 'assert' detected --> Asserts are good in our opinion. Tests use asserts properly.
+  "COM812",  # Trailing comma - conflicts with formatter behavior
 ]
-per-file-ignores = { "**/test_*.py" = ["TRY300", "BLE001", "ANN401", "SLF001", "E501", "S105", "ARG001", "ARG002", "S106", "INP001", "PLC0415"], "**/scripts/**/*.py" = ["T201", "S603", "INP001", "W293"] }
+[tool.ruff.lint.per-file-ignores]
+"**/test_*.py" = ["S101", "ANN401", "ARG001"]
+"src/generated_client/**/*.py" = ["UP007", "F401"]
 
 [tool.mypy]
 strict = true
@@ -93,7 +95,3 @@ exclude_lines = [
     "if TYPE_CHECKING:",
 ]
 
-[dependency-groups]
-dev = [
-    "pytest-cov>=7.0.0",
-]

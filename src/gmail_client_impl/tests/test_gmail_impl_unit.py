@@ -1,11 +1,15 @@
-import pytest
+"""Unit tests for Gmail client implementation."""
+
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from gmail_client_impl.gmail_impl import GmailClient
 from gmail_client_impl.message_impl import GmailMessage
 
 
 @pytest.fixture
-def mock_service():
+def mock_service() -> MagicMock:
     """Mock Gmail API service with nested users/messages calls."""
     mock_service = MagicMock()
     mock_users = mock_service.users.return_value
@@ -17,36 +21,34 @@ def mock_service():
     return mock_service
 
 
-def test_init_with_service(mock_service):
+def test_init_with_service(mock_service: MagicMock) -> None:
     """Ensure GmailClient uses provided service and skips auth."""
     client = GmailClient(service=mock_service)
-    assert client.service == mock_service
+    assert client.service == mock_service  # noqa: SLF001
 
 
-def test_interactive_auth(monkeypatch, tmp_path):
+def test_interactive_auth(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: pytest.TempPathFactory
+) -> None:
+    """Test interactive authentication flow."""
     mock_creds = MagicMock()
     mock_creds.valid = True
 
-    # make TOKEN_PATH point to a temp file so path checks are harmless
     monkeypatch.setattr(GmailClient, "TOKEN_PATH", str(tmp_path / "token.json"))
 
-    # stub interactive flow to return our creds
-    monkeypatch.setattr(
-        GmailClient, "_run_interactive_flow", lambda self, p: mock_creds
-    )
+    monkeypatch.setattr(GmailClient, "_run_interactive_flow", lambda _self, _p: mock_creds)  # noqa: SLF001
 
-    # prevent real file I/O during init
-    monkeypatch.setattr(GmailClient, "_save_token", lambda self, c, p: None)
+    monkeypatch.setattr(GmailClient, "_save_token", lambda _self, _c, _p: None)  # noqa: SLF001
 
-    # also stub build() so discovery client isn't created
-    monkeypatch.setattr("gmail_client_impl.gmail_impl.build", lambda *a, **k: MagicMock())
+    from gmail_client_impl import gmail_impl  # noqa: PLC0415
 
-    # should not raise; proves interactive path invoked
+    monkeypatch.setattr(gmail_impl, "build", lambda *_a, **_k: MagicMock())
+
     GmailClient(service=None, interactive=True)
 
 
 @patch("gmail_client_impl.gmail_impl.message.get_message")
-def test_get_message_returns_message(mock_get_message, mock_service):
+def test_get_message_returns_message(mock_get_message: MagicMock, mock_service: MagicMock) -> None:
     """Ensure get_message calls Gmail API and wraps result in a GmailMessage."""
     mock_get_message.return_value = GmailMessage("123", "SGVsbG8=")
     client = GmailClient(service=mock_service)
@@ -56,7 +58,7 @@ def test_get_message_returns_message(mock_get_message, mock_service):
 
 
 @patch("gmail_client_impl.gmail_impl.message.get_message")
-def test_delete_message_success(mock_get_message, mock_service):
+def test_delete_message_success(mock_get_message: MagicMock, mock_service: MagicMock) -> None:
     """Ensure delete_message returns True if Gmail API delete succeeds."""
     mock_msg = MagicMock()
     mock_msg.subject = "Hello"
@@ -67,38 +69,41 @@ def test_delete_message_success(mock_get_message, mock_service):
 
 
 @patch("gmail_client_impl.gmail_impl.message.get_message")
-def test_delete_message_failure(mock_get_message, mock_service):
+def test_delete_message_failure(mock_get_message: MagicMock, mock_service: MagicMock) -> None:
     """Ensure delete_message returns False when Gmail API delete fails."""
     mock_msg = MagicMock()
     mock_msg.subject = "Failing"
     mock_get_message.return_value = mock_msg
-    mock_service.users.return_value.messages.return_value.delete.return_value.execute.side_effect = Exception("API error")
+    mock_service.users.return_value.messages.return_value.delete.return_value.execute.side_effect = Exception(
+        "API error"
+    )
     client = GmailClient(service=mock_service)
     result = client.delete_message("xyz")
     assert result is False
 
 
 @patch("gmail_client_impl.gmail_impl.message.get_message")
-def test_mark_as_read_success(mock_get_message, mock_service):
+def test_mark_as_read_success(mock_get_message: MagicMock, mock_service: MagicMock) -> None:
     """Ensure mark_as_read returns True when modify() executes."""
     client = GmailClient(service=mock_service)
     assert client.mark_as_read("abc") is True
 
 
 @patch("gmail_client_impl.gmail_impl.message.get_message")
-def test_mark_as_read_failure(mock_get_message, mock_service):
+def test_mark_as_read_failure(mock_get_message: MagicMock, mock_service: MagicMock) -> None:
     """Ensure mark_as_read returns False when modify() raises an error."""
-    mock_service.users.return_value.messages.return_value.modify.return_value.execute.side_effect = Exception("Bad modify")
+    mock_service.users.return_value.messages.return_value.modify.return_value.execute.side_effect = Exception(
+        "Bad modify"
+    )
     client = GmailClient(service=mock_service)
     assert client.mark_as_read("abc") is False
 
 
 @patch("gmail_client_impl.gmail_impl.message.get_message")
-def test_get_messages_yields_messages(mock_get_message, mock_service):
+def test_get_messages_yields_messages(mock_get_message: MagicMock, mock_service: MagicMock) -> None:
     """Ensure get_messages yields multiple GmailMessage instances."""
-    mock_get_message.side_effect = lambda msg_id, raw_data: GmailMessage(msg_id, raw_data)
+    mock_get_message.side_effect = lambda msg_id, _raw_data: GmailMessage(msg_id, _raw_data)
     client = GmailClient(service=mock_service)
     msgs = list(client.get_messages(max_results=2))
     assert len(msgs) == 2
     assert all(isinstance(m, GmailMessage) for m in msgs)
-

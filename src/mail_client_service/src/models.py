@@ -1,6 +1,5 @@
 """Pydantic models for API requests and responses."""
 
-
 from pydantic import BaseModel, Field
 
 
@@ -14,6 +13,8 @@ class MessageSummary(BaseModel):
     subject: str = Field(..., description="Message subject")
 
     class Config:
+        """Configuration for MessageSummary model."""
+
         populate_by_name = True
 
 
@@ -28,6 +29,8 @@ class MessageDetail(BaseModel):
     body: str = Field(..., description="Message body content")
 
     class Config:
+        """Configuration for MessageDetail model."""
+
         populate_by_name = True
 
 

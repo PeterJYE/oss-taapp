@@ -1,4 +1,3 @@
-
 from generated_client.models import ActionResult, MessageDetail, MessageSummary
 
 
@@ -45,7 +44,14 @@ def test_get_message_detail_api_module():
         get_message_detail_messages_message_id_get as get_mod,
     )
 
-    payload = {"id": "m1", "from_": "a@b.com", "to": "me@me.com", "date": "2025-01-01T00:00:00Z", "subject": "s", "body": "b"}
+    payload = {
+        "id": "m1",
+        "from_": "a@b.com",
+        "to": "me@me.com",
+        "date": "2025-01-01T00:00:00Z",
+        "subject": "s",
+        "body": "b",
+    }
     fake = FakeClient(payload)
     parsed = get_mod.sync(client=fake, message_id="m1")
     assert isinstance(parsed, MessageDetail)

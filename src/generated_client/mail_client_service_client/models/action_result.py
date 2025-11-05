@@ -16,6 +16,7 @@ class ActionResult:
     Attributes:
         ok (bool):
         message (Union[None, Unset, str]):
+
     """
 
     ok: bool

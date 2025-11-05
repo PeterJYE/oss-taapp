@@ -16,6 +16,7 @@ class MessageSummary:
     Attributes:
         id (str):
         subject (Union[None, Unset, str]):
+
     """
 
     id: str

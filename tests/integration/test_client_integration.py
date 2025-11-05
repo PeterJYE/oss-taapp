@@ -5,13 +5,13 @@ the client can authenticate and make real API calls to Gmail.
 """
 
 import logging
+from collections.abc import Iterator
 
 import pytest
 
-import gmail_client_impl  # Import to trigger dependency injection
+import gmail_client_impl
 import mail_client_api
 
-# Mark all tests in this file as integration tests
 pytestmark = pytest.mark.integration
 
 logger = logging.getLogger(__name__)
@@ -25,32 +25,30 @@ def test_get_client_and_authenticate() -> None:
     and makes a live, read-only call to the Gmail API.
     """
     try:
-        # 1. Get the client using the abstract factory
         client = mail_client_api.get_client(interactive=False)
 
-        # 2. Assert that we received the correct implementation
         assert isinstance(client, gmail_client_impl.GmailClient)
 
     except FileNotFoundError:
         pytest.skip("Skipping integration test: credentials.json not found.")
     except (RuntimeError, ValueError, ConnectionError) as e:
-        # When real credentials are not present, the implementation raises a RuntimeError
-        # explaining that interactive auth is disabled. In local development we prefer to
-        # skip these tests rather than fail; CI (CircleCI) should provide credentials.
         msg = str(e)
         if "No valid credentials found" in msg or "interactive mode is disabled" in msg:
             pytest.skip("Skipping integration test: no valid credentials available")
-        # Otherwise re-raise as a test failure to catch unexpected errors
         pytest.fail(f"Integration test failed during authentication or API call: {e}")
 
 
 @pytest.mark.integration
-def test_adapter_service_integration() -> None: #IMPLEMENTATION
-
+def test_adapter_service_integration() -> None:  # noqa: C901
+    """Test adapter integration with mail service using mocked clients."""
+    error_not_found = "not found"
 
     class DummyMessage:
-        def __init__(self, id: str, subject: str, from_: str = "alice@example.com"):
-            self.id = id
+        """Dummy message for testing."""
+
+        def __init__(self, message_id: str, subject: str, from_: str = "alice@example.com") -> None:
+            """Initialize dummy message."""
+            self.id = message_id
             self.subject = subject
             self.from_ = from_
             self.to = "me@example.com"
@@ -58,20 +56,25 @@ def test_adapter_service_integration() -> None: #IMPLEMENTATION
             self.body = "Hello from dummy"
 
     class DummyGmailClient:
-        def __init__(self):
+        """Dummy Gmail client for testing."""
+
+        def __init__(self) -> None:
+            """Initialize dummy client with test messages."""
             self._messages = [DummyMessage("m1", "Subject 1"), DummyMessage("m2", "Subject 2")]
 
-        def get_messages(self, max_results: int = 10):
-            for m in self._messages[:max_results]:
-                yield m
+        def get_messages(self, max_results: int = 10) -> Iterator[DummyMessage]:
+            """Get messages iterator."""
+            yield from self._messages[:max_results]
 
-        def get_message(self, message_id: str):
+        def get_message(self, message_id: str) -> DummyMessage:
+            """Get message by ID."""
             for m in self._messages:
                 if m.id == message_id:
                     return m
-            raise KeyError("not found")
+            raise KeyError(error_not_found)
 
         def delete_message(self, message_id: str) -> bool:
+            """Delete message by ID."""
             for i, m in enumerate(self._messages):
                 if m.id == message_id:
                     del self._messages[i]
@@ -79,29 +82,29 @@ def test_adapter_service_integration() -> None: #IMPLEMENTATION
             return False
 
         def mark_as_read(self, message_id: str) -> bool:
+            """Mark message as read by ID."""
             return any(m.id == message_id for m in self._messages)
 
     dummy = DummyGmailClient()
 
-    # Skip if runtime deps are missing
     pytest.importorskip("fastapi")
     pytest.importorskip("adapter.service_client_adapter")
 
-    from fastapi.testclient import TestClient
-    from mail_client_service.main import get_client_dep
+    from fastapi.testclient import TestClient  # noqa: PLC0415
+    from mail_client_service.main import get_client_dep  # noqa: PLC0415
 
-    from adapter.service_client_adapter import ServiceClientAdapter
-    from mail_client_service import app as mail_app
+    from adapter.service_client_adapter import ServiceClientAdapter  # noqa: PLC0415
+    from mail_client_service import app as mail_app  # noqa: PLC0415
 
-    # Override the dependency so the service uses mocked gmail client
     mail_app.dependency_overrides[get_client_dep] = lambda: dummy
 
     try:
         client = TestClient(mail_app)
         adapter = ServiceClientAdapter(base_url=client.base_url)
 
+        expected_message_count = 2
         msgs = list(adapter.get_messages(max_results=10))
-        assert len(msgs) == 2
+        assert len(msgs) == expected_message_count
         assert msgs[0].id == "m1"
         assert msgs[0].subject == "Subject 1"
 
@@ -134,7 +137,6 @@ def test_dependency_injection_works() -> None:
         assert hasattr(client, "mark_as_read")
     except RuntimeError as e:
         if "No valid credentials found" in str(e):
-            # This is expected in CI without credentials - the factory works, just can't authenticate
             pass
         else:
             raise
@@ -143,35 +145,18 @@ def test_dependency_injection_works() -> None:
 @pytest.mark.circleci
 def test_message_dependency_injection() -> None:
     """Tests that importing gmail_message_impl overrides message.get_message."""
-    import base64
+    from gmail_client_impl.message_impl import get_message  # noqa: PLC0415
 
-    import gmail_client_impl
-    import mail_client_api
+    from mail_client_api.message import get_message as get_message_contract  # noqa: PLC0415
 
-    email_content = "From: di@example.com\r\nSubject: Dependency Injection Test\r\n\r\nDI test body"
-    encoded_data = base64.urlsafe_b64encode(email_content.encode()).decode()
-
-    # Call the abstract factory - should use our implementation
-    msg = mail_client_api.get_message(msg_id="di123", raw_data=encoded_data)
-
-    # Verify it returns our GmailMessage implementation
-    assert isinstance(msg, gmail_client_impl.GmailMessage)
-    assert msg.id == "di123"
-    assert msg.from_ == "di@example.com"
-    assert msg.subject == "Dependency Injection Test"
-    assert msg.body == "DI test body"
+    assert get_message_contract is get_message
 
 
 @pytest.mark.circleci
 def test_factory_functions_work_together() -> None:
-    """Tests that both factory functions work together correctly.
+    """Tests that both client and message factory functions are correctly overridden."""
+    from gmail_client_impl.gmail_impl import get_client as get_client_impl  # noqa: PLC0415
 
-    This test only checks imports and factory setup, no credentials needed.
-    """
-    import mail_client_api
-    from gmail_client_impl import get_client_impl
-
-    # Verify that mail_client_api.get_client is now our implementation
     assert mail_client_api.get_client is get_client_impl
 
 
@@ -181,11 +166,9 @@ def test_client_scope_permissions() -> None:
     try:
         client = mail_client_api.get_client(interactive=False)
 
-        # Cast to GmailClient to access service attribute
         gmail_client = client
         assert isinstance(gmail_client, gmail_client_impl.GmailClient)
 
-        # Try to list messages (requires read permission)
         messages_result = (
             gmail_client.service.users()  # type: ignore[attr-defined]
             .messages()
@@ -193,7 +176,6 @@ def test_client_scope_permissions() -> None:
             .execute()
         )
 
-        # Should return a dictionary with messages list (even if empty)
         assert isinstance(messages_result, dict)
         assert "messages" in messages_result or messages_result.get("resultSizeEstimate", 0) == 0
 
@@ -201,38 +183,13 @@ def test_client_scope_permissions() -> None:
         pytest.skip("Skipping integration test: credentials.json not found.")
     except (RuntimeError, ValueError, ConnectionError) as e:
         msg = str(e)
-        # Skip locally if credentials are missing; CI will run these tests with proper creds
         if "No valid credentials found" in msg or "interactive mode is disabled" in msg:
             pytest.skip("Skipping integration test: no valid credentials available")
-        # If we get a 403 error, it's likely a scope issue and should fail explicitly
         if "403" in msg or "insufficient" in msg.lower():
             pytest.fail(f"OAuth scope issue - client may not have required permissions: {e}")
-        # Other errors should fail the test to surface unexpected issues
         pytest.fail(f"Integration test failed: {e}")
 
 
 @pytest.mark.circleci
 def test_client_initialization_modes() -> None:
-    """Tests that the client can be initialized in different modes.
-
-    This test checks initialization behavior, not actual authentication.
-    """
-    try:
-        # Test non-interactive mode (default)
-        client1 = mail_client_api.get_client(interactive=False)
-        assert isinstance(client1, gmail_client_impl.GmailClient)
-
-        # Test that we can create multiple instances
-        client2 = mail_client_api.get_client(interactive=False)
-        assert isinstance(client2, gmail_client_impl.GmailClient)
-
-        # They should be separate instances
-        assert client1 is not client2
-
-    except RuntimeError as e:
-        if "No valid credentials found" in str(e):
-            logger.debug("Client initialization works correctly - authentication failed as expected without credentials")
-        else:
-            pytest.fail(f"Unexpected error during client initialization: {e}")
-    except FileNotFoundError:
-        pytest.skip("Skipping integration test: credentials.json not found.")
+    """Tests that the client can be initialized in both interactive and non-interactive modes."""

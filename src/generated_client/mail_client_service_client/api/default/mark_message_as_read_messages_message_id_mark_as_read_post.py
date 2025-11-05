@@ -69,8 +69,8 @@ def sync_detailed(
 
     Returns:
         Response[Union[ActionResult, HTTPValidationError]]
-    """
 
+    """
     kwargs = _get_kwargs(
         message_id=message_id,
     )
@@ -100,8 +100,8 @@ def sync(
 
     Returns:
         Union[ActionResult, HTTPValidationError]
-    """
 
+    """
     return sync_detailed(
         message_id=message_id,
         client=client,
@@ -126,8 +126,8 @@ async def asyncio_detailed(
 
     Returns:
         Response[Union[ActionResult, HTTPValidationError]]
-    """
 
+    """
     kwargs = _get_kwargs(
         message_id=message_id,
     )
@@ -155,8 +155,8 @@ async def asyncio(
 
     Returns:
         Union[ActionResult, HTTPValidationError]
-    """
 
+    """
     return (
         await asyncio_detailed(
             message_id=message_id,

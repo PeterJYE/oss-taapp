@@ -4,14 +4,13 @@ These tests verify that the generated client can successfully communicate with t
 """
 
 import pytest
-from fastapi.testclient import TestClient
 
 pytestmark = pytest.mark.integration
 
 
 def test_client_generation_is_available() -> None:
     """Test that the generation script exists and can be imported."""
-    from pathlib import Path
+    from pathlib import Path  # noqa: PLC0415
 
     generate_script = (
         Path(__file__).parent.parent.parent / "src" / "openai_client_service_api_client" / "scripts" / "generate_client.py"
@@ -22,7 +21,8 @@ def test_client_generation_is_available() -> None:
 
 def test_client_can_be_generated_from_test_service() -> None:
     """Test that the client can be generated from a running FastAPI service."""
-    from openai_client_service.main import app  # type: ignore[import-untyped]
+    from fastapi.testclient import TestClient  # noqa: PLC0415
+    from openai_client_service.main import app  # noqa: PLC0415  # type: ignore[import-untyped]
 
     test_client = TestClient(app)
 
@@ -40,11 +40,12 @@ def test_client_can_be_generated_from_test_service() -> None:
 
 def test_service_endpoints_accessible_via_test_client() -> None:
     """Test that we can interact with the service via the test client."""
-    import base64
-    import secrets
+    import base64  # noqa: PLC0415
+    import secrets  # noqa: PLC0415
 
-    from openai_client_service.dependencies import _create_session
-    from openai_client_service.main import app  # type: ignore[import-untyped]
+    from fastapi.testclient import TestClient  # noqa: PLC0415
+    from openai_client_service.dependencies import _create_session  # noqa: PLC0415
+    from openai_client_service.main import app  # noqa: PLC0415  # type: ignore[import-untyped]
 
     test_client = TestClient(app)
 
@@ -53,7 +54,6 @@ def test_service_endpoints_accessible_via_test_client() -> None:
     assert response.status_code == http_ok
     assert response.json() == {"status": "ok"}
 
-    # Create a test session for authentication
     test_subject = "test-user"
     session_id = base64.urlsafe_b64encode(secrets.token_bytes(24)).decode().rstrip("=")
     _create_session(session_id, test_subject)
@@ -75,7 +75,8 @@ def test_service_endpoints_accessible_via_test_client() -> None:
 
 def test_openapi_spec_structure() -> None:
     """Test that the OpenAPI spec has the expected structure for client generation."""
-    from openai_client_service.main import app  # type: ignore[import-untyped]
+    from fastapi.testclient import TestClient  # noqa: PLC0415
+    from openai_client_service.main import app  # noqa: PLC0415  # type: ignore[import-untyped]
 
     test_client = TestClient(app)
     response = test_client.get("/openapi.json")
@@ -94,7 +95,8 @@ def test_openapi_spec_structure() -> None:
 
 def test_all_endpoints_have_request_body_schemas() -> None:
     """Test that POST endpoints have properly documented request bodies."""
-    from openai_client_service.main import app  # type: ignore[import-untyped]
+    from fastapi.testclient import TestClient  # noqa: PLC0415
+    from openai_client_service.main import app  # noqa: PLC0415  # type: ignore[import-untyped]
 
     test_client = TestClient(app)
     response = test_client.get("/openapi.json")
@@ -115,7 +117,8 @@ def test_all_endpoints_have_request_body_schemas() -> None:
 
 def test_service_handles_missing_session() -> None:
     """Test that the service properly validates the session cookie."""
-    from openai_client_service.main import app  # type: ignore[import-untyped]
+    from fastapi.testclient import TestClient  # noqa: PLC0415
+    from openai_client_service.main import app  # noqa: PLC0415  # type: ignore[import-untyped]
 
     test_client = TestClient(app)
 
@@ -128,5 +131,4 @@ def test_service_handles_missing_session() -> None:
     )
 
     http_unauthorized = 401
-    # Should return 401 Unauthorized when no session cookie is provided
     assert response.status_code == http_unauthorized

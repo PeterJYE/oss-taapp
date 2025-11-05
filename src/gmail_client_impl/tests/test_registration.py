@@ -14,7 +14,6 @@ def test_register_binds_factories(monkeypatch: pytest.MonkeyPatch) -> None:
     client_protocol = importlib.import_module("mail_client_api.client")
     message_protocol_module = importlib.import_module("mail_client_api.message")
 
-    # Reset to protocol defaults before invoking register.
     monkeypatch.setattr(mail_client_api, "get_client", client_protocol.get_client, raising=False)
     monkeypatch.setattr(
         message_protocol,

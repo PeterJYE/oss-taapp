@@ -19,27 +19,24 @@ pytestmark = pytest.mark.integration
 def test_adapter_end_to_end_against_app() -> None:
     """Start the FastAPI app and call it through the adapter using TestClient base URL."""
     try:
-        from fastapi.testclient import TestClient  # type: ignore[assignment]
-    except Exception:  # pragma: no cover - environment-dependent
+        from fastapi.testclient import TestClient  # noqa: PLC0415  # type: ignore[assignment]
+    except (ImportError, ModuleNotFoundError):  # pragma: no cover - environment-dependent
         pytest.skip("fastapi or testclient not installed in this environment")
 
-    from openai_client_service.dependencies import _create_session
-    from openai_client_service.main import app  # type: ignore[import-untyped]
+    from openai_client_service.dependencies import _create_session  # noqa: PLC0415
+    from openai_client_service.main import app  # noqa: PLC0415  # type: ignore[import-untyped]
 
     test_client = TestClient(app)
     base_url = str(test_client.base_url)
 
-    # Create a test session for authentication
     test_subject = "it-user"
     session_id = base64.urlsafe_b64encode(secrets.token_bytes(24)).decode().rstrip("=")
     _create_session(session_id, test_subject)
 
     adapter = OpenAIServiceAdapter(base_url=base_url, session_id=session_id)
 
-    # health should be OK
     assert adapter.health_check() is True
 
-    # conversation lifecycle
     conv_id = adapter.create_conversation()
     assert isinstance(conv_id, str)
     assert conv_id
@@ -49,7 +46,6 @@ def test_adapter_end_to_end_against_app() -> None:
 
     assert adapter.delete_conversation(conv_id) is True
 
-    # generate without API key should raise 401
     expected_status = 401
     with pytest.raises(AdapterAPIError) as ei:
         adapter.generate_response(["hello there"], conversation_id=None)

@@ -31,7 +31,6 @@ class AdapterNetworkError(AdapterError):
 
 class AdapterAPIError(AdapterError):
     def __init__(self, status_code: int, content: bytes | str | None = None) -> None:
-        # Content may be bytes; convert to a safe string representation.
         content_repr = repr(content) if isinstance(content, bytes) else str(content)
         message = f"API error {status_code}: {content_repr}"
         super().__init__(message)
@@ -70,7 +69,7 @@ class OpenAIServiceAdapter:
         host = (urlparse(base_url).hostname or "").lower()
         if host == "testserver":
             try:
-                from openai_client_service.main import app  # noqa: PLC0415 - lazy import for tests
+                from openai_client_service.main import app  # noqa: PLC0415
 
                 transport = httpx.ASGITransport(app=app)  # type: ignore[arg-type,assignment]
             except ImportError:
@@ -148,7 +147,6 @@ class OpenAIServiceAdapter:
             return r.status_code == HTTP_OK
         status_val: object = data.get("status")
         if isinstance(status_val, str):
-            # Narrowed to str by isinstance check
             status_str: str = status_val
             if status_str == "ok":
                 return True

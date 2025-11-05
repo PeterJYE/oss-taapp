@@ -21,7 +21,6 @@ from openai_client_service.dependencies import (
 
 router = APIRouter()
 
-# Constants
 HTTP_BAD_REQUEST = 400
 
 _PENDING_STATE: dict[str, dict[str, int]] = {}
@@ -147,9 +146,6 @@ def _extract_subject(token_json: dict[str, object], cfg: dict[str, str]) -> str 
     except (httpx.HTTPError, ValueError, KeyError):
         pass
 
-    # Do not decode id_token without signature verification - this would allow
-    # an attacker to forge tokens and impersonate any user. Only use the
-    # validated access_token via the userinfo endpoint.
     return None
 
 

@@ -22,9 +22,6 @@ def generate_client(openapi_url: str | None = None) -> None:
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"Generating OpenAPI client from {openapi_url}")
-    print(f"Output directory: {output_dir}")
-
     cmd = [
         sys.executable,
         "-m",
@@ -39,22 +36,10 @@ def generate_client(openapi_url: str | None = None) -> None:
     ]
 
     try:
-        subprocess.run(cmd, check=True)
-        print("✓ Client generated successfully!")
-        print(f"\nClient files are in: {output_dir}")
-        print("\nTo use the client:")
-        print("  from openai_client_service_api_client import Client")
-        print("  from openai_client_service_api_client.client import AuthenticatedClient")
-    except subprocess.CalledProcessError as e:
-        print(f"✗ Error generating client: {e}")
-        print("\nMake sure the FastAPI service is running:")
-        print("  cd src/openai_client_service && uvicorn main:app --reload")
-        print("\nOr specify a different URL:")
-        print("  python scripts/generate_client.py --url http://your-server.com/openapi.json")
+        subprocess.run(cmd, check=True)  # noqa: S603
+    except subprocess.CalledProcessError:
         sys.exit(1)
     except FileNotFoundError:
-        print("✗ openapi-python-client not found. Install it with:")
-        print("  pip install openapi-python-client")
         sys.exit(1)
 
 

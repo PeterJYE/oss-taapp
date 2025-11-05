@@ -18,6 +18,7 @@ class MessageDetail:
         date (str):
         subject (str):
         body (str):
+
     """
 
     id: str
