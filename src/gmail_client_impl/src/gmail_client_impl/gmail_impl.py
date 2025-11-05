@@ -344,6 +344,12 @@ def get_client_impl(*, interactive: bool = False) -> mail_client_api.Client:
     return GmailClient(interactive=interactive)
 
 
+def get_client(*, interactive: bool = False) -> mail_client_api.Client:  # noqa: D401
+    """Compatibility alias for get_client_impl used by tests."""
+    return get_client_impl(interactive=interactive)
+
+
 def register() -> None:
     """Register the Gmail client implementation with the mail client API."""
-    mail_client_api.get_client = get_client_impl
+    # Point the abstract factory to the public alias used by tests
+    mail_client_api.get_client = get_client

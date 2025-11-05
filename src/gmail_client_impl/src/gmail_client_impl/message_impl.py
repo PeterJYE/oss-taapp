@@ -203,6 +203,11 @@ def get_message_impl(msg_id: str, raw_data: str) -> message.Message:
     return GmailMessage(msg_id=msg_id, raw_data=raw_data)
 
 
+def get_message(msg_id: str, raw_data: str) -> message.Message:  # noqa: D401
+    """Compatibility alias for get_message_impl used by tests."""
+    return get_message_impl(msg_id=msg_id, raw_data=raw_data)
+
+
 def register() -> None:
     """Register the Gmail message implementation with the message abstraction."""
     # Some test helpers reload the `mail_client_api.message` module which can
@@ -213,10 +218,10 @@ def register() -> None:
 
     try:
         m = importlib.import_module("mail_client_api.message")
-        setattr(m, "get_message", get_message_impl)
+        setattr(m, "get_message", get_message)
     except Exception:
         # Fallback: update the module object this file imported earlier
-        message.get_message = get_message_impl
+        message.get_message = get_message
 
     # Also set the top-level factory function on the abstract package
-    mail_client_api.get_message = get_message_impl
+    mail_client_api.get_message = get_message

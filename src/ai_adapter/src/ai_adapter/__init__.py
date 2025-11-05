@@ -1,9 +1,12 @@
-"""Internal ai_adapter package marker for namespace resolution.
+"""AI Service adapter package exports.
 
-This package was added during HW2 exploration to house an HTTP adapter and
-its tests. This file ensures the directory is treated as a regular package
-instead of an implicit namespace. We intentionally avoid importing submodules
-here to keep import side effects minimal.
+Re-exports the public adapter API for test and consumer imports.
 """
 
-__all__: list[str] = []
+from ._adapter import AdapterAPIError, AdapterError, OpenAIServiceAdapter
+
+__all__ = [
+    "AdapterAPIError",
+    "AdapterError",
+    "OpenAIServiceAdapter",
+]

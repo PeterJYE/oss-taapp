@@ -17,6 +17,7 @@ dev = [
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
     "ruff>=0.12.7",
+    "yamllint>=1.35.1",
     "types-requests>=2.32.4.20250611",
 ]
 
@@ -54,6 +55,7 @@ ignore = [
   "PT018",   # combined assertions acceptable in tests
   "ARG002",  # unused args in test doubles
   "TRY003",  # allow inline exception messages in tests
+  "I001",    # don't enforce import sorting inside tests (common for importorskip)
 ]
 "src/generated_client/**/*.py" = ["UP007", "F401"]
 

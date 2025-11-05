@@ -1,3 +1,4 @@
+---
 # Use the latest 2.1 version of CircleCI pipeline process engine.
 # See: https://circleci.com/docs/configuration-reference
 version: 2.1
@@ -7,7 +8,7 @@ jobs:
   # Job 1: Setup Environment and Install All Dependencies
   build:
     docker:
-      - image: cimg/python:3.11 # Use a consistent Python version
+      - image: cimg/python:3.11  # Use a consistent Python version
     steps:
       - checkout
       - run:
@@ -16,7 +17,7 @@ jobs:
             curl -LsSf https://astral.sh/uv/install.sh | sh
             echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> $BASH_ENV
             source $BASH_ENV
-            uv --version # Verify installation
+            uv --version  # Verify installation
       - run:
           name: "Create Virtual Env & Install All Dependencies via UV Sync"
           command: |
@@ -29,7 +30,7 @@ jobs:
           name: "Verify Installation (Optional)"
           command: |
             source .venv/bin/activate
-            uv tree # Check if workspace members and tools are listed
+            uv tree  # Check if workspace members and tools are listed
             ruff --version
             pytest --version
             mypy --version
@@ -46,12 +47,17 @@ jobs:
       - image: cimg/python:3.11
     steps:
       - attach_workspace:
-          at: . # Attach the workspace persisted from 'build'
+          at: .  # Attach the workspace persisted from 'build'
       - run:
           name: "Run Linting and Formatting Checks"
           command: |
-            source .venv/bin/activate # Activate the venv from the workspace
+            source .venv/bin/activate  # Activate the venv from the workspace
             ruff check .
+      - run:
+          name: "Lint CircleCI YAML config"
+          command: |
+            source .venv/bin/activate
+            yamllint .circleci/config.yml
 
   # Job 3: Unit Tests and Coverage (Fast, No External Dependencies)
   unit_test:
@@ -59,20 +65,20 @@ jobs:
       - image: cimg/python:3.11
     steps:
       - attach_workspace:
-          at: . # Attach the workspace persisted from 'build'
+          at: .  # Attach the workspace persisted from 'build'
       - run:
           name: "Activate Venv and Create Test Results Directory"
           command: |
             source .venv/bin/activate
-            mkdir -p test-results/unit # Create directory for JUnit XML
+            mkdir -p test-results/unit  # Create directory for JUnit XML
       - run:
           name: "Execute Unit Test Suite (src/ tests only)"
           command: |
             source .venv/bin/activate
             # Run only unit tests from src/ directories (fast, isolated tests)
             pytest src/ --cov=src --cov-report=xml --cov-report=term \
-                     --junitxml=test-results/unit/junit.xml \
-                     --cov-fail-under=85
+              --junitxml=test-results/unit/junit.xml \
+              --cov-fail-under=85
       - run:
           name: "Run Static Analysis (mypy)"
           command: |
@@ -82,7 +88,7 @@ jobs:
             mypy src/ --explicit-package-bases
       - store_test_results:
           path: test-results/unit
-      - store_artifacts: # Store coverage reports
+      - store_artifacts:  # Store coverage reports
           path: coverage.xml
       - store_artifacts:
           path: test-results/unit
@@ -94,22 +100,22 @@ jobs:
     # Environment variables from the 'gmail-client' context will be available here
     steps:
       - attach_workspace:
-          at: . # Attach the workspace persisted from 'build'
+          at: .  # Attach the workspace persisted from 'build'
       - run:
           name: "Activate Venv and Create Test Results Directory"
           command: |
             source .venv/bin/activate
-            mkdir -p test-results/circleci # Separate directory for results
+            mkdir -p test-results/circleci  # Separate directory for results
       - run:
           name: "Execute All Tests Except Local Credentials"
           command: |
             source .venv/bin/activate
             # Run all tests from src/ and tests/ directories except those requiring local credentials
             # This includes unit tests, integration tests, and e2e tests that work with env vars
-            # Coverage tracking enabled since this includes comprehensive unit tests
+            # No coverage here; coverage is enforced in the dedicated unit_test job
             pytest src/ tests/ -m "not local_credentials" \
-                   --junitxml=test-results/circleci/junit.xml -v \
-                   --cov=src --cov-report=term
+              --junitxml=test-results/circleci/junit.xml \
+              -v
       - store_test_results:
           path: test-results/circleci
       - store_artifacts:
@@ -122,7 +128,7 @@ jobs:
     # Environment variables from the 'gmail-client' context will be available here
     steps:
       - attach_workspace:
-          at: . # Attach the workspace persisted from 'build'
+          at: .  # Attach the workspace persisted from 'build'
       - run:
           name: "Verify Environment Variables"
           command: |
@@ -137,7 +143,7 @@ jobs:
           name: "Activate Venv and Create Test Results Directory"
           command: |
             source .venv/bin/activate
-            mkdir -p test-results/integration # Separate directory for results
+            mkdir -p test-results/integration  # Separate directory for results
       - run:
           name: "Execute Integration Test Suite with Real API Calls"
           command: |
@@ -146,8 +152,9 @@ jobs:
             # These will use environment variables for authentication
             # Note: No coverage tracking for integration tests - they test component interactions
             pytest -m "integration and not local_credentials" \
-                   --junitxml=test-results/integration/junit.xml -v \
-                   --no-cov
+              --junitxml=test-results/integration/junit.xml \
+              -v \
+              --no-cov
       - store_test_results:
           path: test-results/integration
       - store_artifacts:
@@ -156,10 +163,10 @@ jobs:
   # Job 6: Report Summary
   report_summary:
     docker:
-      - image: cimg/base:stable # Use a basic image for reporting
+      - image: cimg/base:stable  # Use a basic image for reporting
     steps:
       - attach_workspace:
-          at: . # Attach the workspace
+          at: .  # Attach the workspace
       - run:
           name: "Summarize Unit Test Results"
           command: |
@@ -168,8 +175,10 @@ jobs:
               echo "Unit test results file found."
               # Extract test count if possible
               if command -v xmllint > /dev/null; then
-                tests=$(xmllint --xpath "string(//testsuite/@tests)" test-results/unit/junit.xml 2>/dev/null || echo "N/A")
-                failures=$(xmllint --xpath "string(//testsuite/@failures)" test-results/unit/junit.xml 2>/dev/null || echo "N/A")
+                tests=$(xmllint --xpath "string(//testsuite/@tests)" \
+                  test-results/unit/junit.xml 2>/dev/null || echo "N/A")
+                failures=$(xmllint --xpath "string(//testsuite/@failures)" \
+                  test-results/unit/junit.xml 2>/dev/null || echo "N/A")
                 echo "Tests: $tests, Failures: $failures"
               fi
             else
@@ -198,14 +207,14 @@ jobs:
           command: |
             echo "--- Coverage Summary ---"
             if [ -f coverage.xml ]; then
-               echo "Coverage XML found. Check artifacts for details."
-               # Extract overall line rate if xmllint is available
-               if command -v xmllint > /dev/null; then
-                 coverage_rate=$(xmllint --xpath "string(//coverage/@line-rate)" coverage.xml 2>/dev/null || echo "N/A")
-                 echo "Line Coverage Rate: $coverage_rate"
-               fi
+              echo "Coverage XML found. Check artifacts for details."
+              # Extract overall line rate if xmllint is available
+              if command -v xmllint > /dev/null; then
+                coverage_rate=$(xmllint --xpath "string(//coverage/@line-rate)" coverage.xml 2>/dev/null || echo "N/A")
+                echo "Line Coverage Rate: $coverage_rate"
+              fi
             else
-               echo "Coverage XML not found."
+              echo "Coverage XML not found."
             fi
 
 # Orchestrate jobs using workflows
@@ -231,7 +240,6 @@ workflows:
                 - develop
                 - kamen-requierd-fixes
                 - make-real-deletions
-
       - unit_test:
           requires:
             - build
@@ -242,10 +250,31 @@ workflows:
                 - develop
                 - kamen-requierd-fixes
                 - make-real-deletions
+      - circleci_test:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore:
+                - main
+                - develop
+                - kamen-requierd-fixes
+                - make-real-deletions
+      - report_summary:
+          requires:
+            - unit_test
+            - circleci_test
+          filters:
+            branches:
+              ignore:
+                - main
+                - develop
+                - kamen-requierd-fixes
+                - make-real-deletions
 
       - circleci_test:
           requires:
-            - unit_test # Run after unit tests pass
+            - unit_test  # Run after unit tests pass
           filters:
             branches:
               ignore:
@@ -275,7 +304,7 @@ workflows:
             branches:
               only:
                 - main
-                - develop # Add other branches as needed
+                - develop  # Add other branches as needed
                 - kamen-requierd-fixes
                 - make-real-deletions
 
@@ -314,8 +343,8 @@ workflows:
 
       - integration_test:
           requires:
-            - circleci_test # Run after CircleCI tests pass
-          context: gmail-client # Context containing Gmail API credentials
+            - circleci_test  # Run after CircleCI tests pass
+          context: gmail-client  # Context containing Gmail API credentials
           filters:
             branches:
               only:
@@ -323,7 +352,7 @@ workflows:
                 - develop
                 - kamen-requierd-fixes
                 - make-real-deletions
-                
+
       - report_summary:
           requires:
             - unit_test

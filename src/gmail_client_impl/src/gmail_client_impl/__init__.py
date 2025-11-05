@@ -20,3 +20,13 @@ def register() -> None:
     """Register the Gmail client and message implementations."""
     _register_client()
     _register_message()
+
+
+# Auto-register on import so the abstract API factories are wired by default.
+try:  # pragma: no cover - trivial import-time wiring
+    register()
+except Exception:
+    # In environments where dependencies are missing, importing this package
+    # shouldn't hard-crash the process; tests that need registration can call
+    # gmail_client_impl.register() explicitly.
+    pass

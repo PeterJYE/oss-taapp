@@ -8,6 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
+.venv312
 
 # Tooling Caches
 .mypy_cache/
