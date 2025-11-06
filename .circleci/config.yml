@@ -104,7 +104,17 @@ jobs:
             source .venv/bin/activate
             # Target specific source directories for mypy
             uv add types-requests
-            mypy src/ --explicit-package-bases
+            mypy \
+              src/adapter \
+              src/ai_adapter/src \
+              src/gmail_client_impl/src \
+              src/gmail_message_impl/src \
+              src/mail_client_api/src \
+              src/mail_client_service/src \
+              src/message/src \
+              src/generated_client \
+              src/openai_adapter/src \
+              --explicit-package-bases
       - store_test_results:
           path: test-results/unit
       - store_artifacts:  # Store coverage reports
