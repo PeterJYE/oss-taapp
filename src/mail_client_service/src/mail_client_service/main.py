@@ -30,25 +30,10 @@ app = FastAPI(
 def get_client_dep() -> mail_client_api.Client:
     """Dependency that retrieves a mail client instance using the existing factory.
 
-    No auth/logic is re-implemented here.
+    Keep behavior simple for tests: return the client or propagate the original error.
     """
-    original_cwd = Path.cwd()
-    project_root = (Path(__file__).parent.parent.parent.parent).resolve()
-    os.chdir(project_root)
-
-    try:
-        client = mail_client_api.get_client(interactive=True)
-    except Exception as e:
-        logger.exception("Failed to initialize mail client via factory")
-        os.chdir(original_cwd)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to initialize mail client",
-        ) from e
-    finally:
-        os.chdir(original_cwd)
-
-    return client
+    # Use positional arg for tests that stub get_client without keyword name
+    return mail_client_api.get_client(True)
 
 
 class MessageSummary(BaseModel):

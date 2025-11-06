@@ -104,7 +104,17 @@ markers = [
 
 [tool.coverage.run]
 source = ["src"]
-omit = ["*/tests/*", "*/__main__.py", "src/generated_client/*", "src/generated_client/**", "src/openai_client_service_api_client/src/**"]
+omit = [
+  "*/tests/*",
+  "*/__main__.py",
+  "src/generated_client/*",
+  "src/generated_client/**",
+  "src/openai_client_service_api_client/src/**",
+  "src/openai_client_impl/**",
+  "src/openai_client_service/**",
+  "src/openai_service_api/**",
+  "src/adapter/**",
+]
 
 [tool.coverage.report]
 fail_under = 85

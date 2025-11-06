@@ -333,12 +333,18 @@ class GmailClient(mail_client_api.Client):
             )
             raw_content = msg_data.get("raw")
             if raw_content:
-                # Use positional arguments to be compatible with test doubles that
-                # don't accept keyword names matching the abstraction.
-                yield message.get_message(
-                    msg_summary["id"],
-                    raw_content,
-                )
+                # Prefer keyword args for clarity, but fall back to positional
+                # to support simple test doubles that don't accept keywords.
+                try:
+                    yield message.get_message(
+                        msg_id=msg_summary["id"],
+                        raw_data=raw_content,
+                    )
+                except TypeError:
+                    yield message.get_message(
+                        msg_summary["id"],
+                        raw_content,
+                    )
 
 
 def get_client_impl(*, interactive: bool = False) -> mail_client_api.Client:
