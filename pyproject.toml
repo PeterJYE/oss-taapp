@@ -64,6 +64,7 @@ strict = true
 explicit_package_bases = true
 # point to the component src/ directories (monorepo)
 mypy_path = [
+  "src",
   "src/mail_client_api/src",
   "src/gmail_client_impl/src",
   "src/mail_client_service/src",
@@ -73,8 +74,7 @@ mypy_path = [
   "src/openai_client_service_api_client/src",
   "src/openai_adapter/src",
   "src/ai_adapter/src",
-  "src/generated_client",
-  "src/adapter",
+  
   "src/message/src",
 ]
 ignore_missing_imports = false

@@ -105,13 +105,13 @@ jobs:
             # Target specific source directories for mypy
             uv add types-requests
             mypy \
-              src/adapter \
-              src/ai_adapter/src/ai_adapter \
-              src/gmail_client_impl/src/gmail_client_impl \
-              src/mail_client_api/src/mail_client_api \
-              src/mail_client_service/src/mail_client_service \
-              src/generated_client \
-              src/openai_adapter/src/openai_adapter \
+              -p adapter \
+              -p ai_adapter \
+              -p gmail_client_impl \
+              -p mail_client_api \
+              -p mail_client_service \
+              -p generated_client \
+              -p openai_adapter \
               --explicit-package-bases
       - store_test_results:
           path: test-results/unit
