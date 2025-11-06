@@ -110,7 +110,6 @@ jobs:
               src/gmail_client_impl/src/gmail_client_impl \
               src/mail_client_api/src/mail_client_api \
               src/mail_client_service/src/mail_client_service \
-              src/message/src/message \
               src/generated_client \
               src/openai_adapter/src/openai_adapter \
               --explicit-package-bases
