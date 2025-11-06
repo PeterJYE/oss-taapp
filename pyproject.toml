@@ -75,7 +75,6 @@ mypy_path = [
   "src/ai_adapter/src",
   "src/generated_client",
   "src/adapter",
-  "src/gmail_message_impl/src",
   "src/message/src",
 ]
 ignore_missing_imports = false
