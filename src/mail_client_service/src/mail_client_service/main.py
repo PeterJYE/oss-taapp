@@ -7,8 +7,6 @@ allowing clients to interact with mail services via HTTP endpoints.
 from __future__ import annotations
 
 import logging
-import os
-from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Query, status
@@ -33,7 +31,7 @@ def get_client_dep() -> mail_client_api.Client:
     Keep behavior simple for tests: return the client or propagate the original error.
     """
     # Use positional arg for tests that stub get_client without keyword name
-    return mail_client_api.get_client(True)
+    return mail_client_api.get_client(True)  # noqa: FBT003
 
 
 class MessageSummary(BaseModel):
