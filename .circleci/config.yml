@@ -252,28 +252,6 @@ workflows:
                 - make-real-deletions
       - circleci_test:
           requires:
-            - build
-          filters:
-            branches:
-              ignore:
-                - main
-                - develop
-                - kamen-requierd-fixes
-                - make-real-deletions
-      - report_summary:
-          requires:
-            - unit_test
-            - circleci_test
-          filters:
-            branches:
-              ignore:
-                - main
-                - develop
-                - kamen-requierd-fixes
-                - make-real-deletions
-
-      - circleci_test:
-          requires:
             - unit_test  # Run after unit tests pass
           filters:
             branches:
