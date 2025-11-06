@@ -7,8 +7,8 @@ import pytest
 def test_get_client_dep_success(monkeypatch: pytest.MonkeyPatch, tmp_path: pytest.TempPathFactory) -> None:
     """Test get_client_dep successfully retrieves client."""
     pytest.importorskip("mail_client_api")
-    import mail_client_api  # noqa: PLC0415
     from mail_client_service.main import get_client_dep  # noqa: PLC0415
+    import mail_client_api  # noqa: PLC0415
 
     monkeypatch.setattr(mail_client_api, "get_client", lambda _interactive=True: object())
 
@@ -20,8 +20,8 @@ def test_get_client_dep_success(monkeypatch: pytest.MonkeyPatch, tmp_path: pytes
 def test_get_client_dep_failure(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test get_client_dep raises exception when get_client fails."""
     pytest.importorskip("mail_client_api")
-    import mail_client_api  # noqa: PLC0415
     from mail_client_service.main import get_client_dep  # noqa: PLC0415
+    import mail_client_api  # noqa: PLC0415
 
     monkeypatch.setattr(
         mail_client_api,

@@ -333,9 +333,11 @@ class GmailClient(mail_client_api.Client):
             )
             raw_content = msg_data.get("raw")
             if raw_content:
+                # Use positional arguments to be compatible with test doubles that
+                # don't accept keyword names matching the abstraction.
                 yield message.get_message(
-                    msg_id=msg_summary["id"],
-                    raw_data=raw_content,
+                    msg_summary["id"],
+                    raw_content,
                 )
 
 
@@ -351,5 +353,5 @@ def get_client(*, interactive: bool = False) -> mail_client_api.Client:  # noqa:
 
 def register() -> None:
     """Register the Gmail client implementation with the mail client API."""
-    # Point the abstract factory to the public alias used by tests
-    mail_client_api.get_client = get_client
+    # Point the abstract factory directly to the concrete implementation
+    mail_client_api.get_client = get_client_impl

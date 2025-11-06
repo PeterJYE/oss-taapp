@@ -30,6 +30,12 @@ members = [
   "src/openai_client_impl",
   "src/openai_client_service",
   "src/openai_client_service_api_client",
+  "src/adapter",
+  "src/ai_adapter",
+  "src/openai_adapter",
+  "src/generated_client",
+  "src/gmail_message_impl",
+  "src/message",
 ]
 
 [tool.ruff]

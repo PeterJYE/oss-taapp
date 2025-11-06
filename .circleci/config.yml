@@ -76,7 +76,24 @@ jobs:
           command: |
             source .venv/bin/activate
             # Ensure monorepo packages are importable without installing each as a wheel
-            export PYTHONPATH="src:src/ai_adapter/src:src/openai_adapter/src:src/mail_client_api/src:src/gmail_client_impl/src:src/gmail_message_impl/src:src/message/src:src/mail_client_service/src:src/openai_service_api/src:src/openai_client_impl/src:src/openai_client_service/src:src/openai_client_service_api_client/src:src/generated_client:${PYTHONPATH}"
+            paths=(
+              src
+              src/ai_adapter/src
+              src/openai_adapter/src
+              src/mail_client_api/src
+              src/gmail_client_impl/src
+              src/gmail_message_impl/src
+              src/message/src
+              src/mail_client_service/src
+              src/openai_service_api/src
+              src/openai_client_impl/src
+              src/openai_client_service/src
+              src/openai_client_service_api_client/src
+              src/generated_client
+              src/adapter
+            )
+            PYTHONPATH="$(IFS=:; echo "${paths[*]}"):${PYTHONPATH}"
+            export PYTHONPATH
             # Run only unit tests from src/ directories (fast, isolated tests)
             pytest src/ --cov=src --cov-report=xml --cov-report=term \
               --junitxml=test-results/unit/junit.xml \
@@ -113,7 +130,24 @@ jobs:
           command: |
             source .venv/bin/activate
             # Ensure monorepo packages are importable without installing each as a wheel
-            export PYTHONPATH="src:src/ai_adapter/src:src/openai_adapter/src:src/mail_client_api/src:src/gmail_client_impl/src:src/gmail_message_impl/src:src/message/src:src/mail_client_service/src:src/openai_service_api/src:src/openai_client_impl/src:src/openai_client_service/src:src/openai_client_service_api_client/src:src/generated_client:${PYTHONPATH}"
+            paths=(
+              src
+              src/ai_adapter/src
+              src/openai_adapter/src
+              src/mail_client_api/src
+              src/gmail_client_impl/src
+              src/gmail_message_impl/src
+              src/message/src
+              src/mail_client_service/src
+              src/openai_service_api/src
+              src/openai_client_impl/src
+              src/openai_client_service/src
+              src/openai_client_service_api_client/src
+              src/generated_client
+              src/adapter
+            )
+            PYTHONPATH="$(IFS=:; echo "${paths[*]}"):${PYTHONPATH}"
+            export PYTHONPATH
             # Run all tests from src/ and tests/ directories except those requiring local credentials
             # This includes unit tests, integration tests, and e2e tests that work with env vars
             # No coverage here; coverage is enforced in the dedicated unit_test job
