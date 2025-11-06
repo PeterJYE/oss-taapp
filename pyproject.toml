@@ -80,9 +80,6 @@ mypy_path = [
 ]
 ignore_missing_imports = false
 warn_unused_ignores = false
-exclude = [
-  "^src/.*/src/.*",
-]
 
 [[tool.mypy.overrides]]
 module = [
