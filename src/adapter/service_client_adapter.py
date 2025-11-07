@@ -17,26 +17,32 @@ class ServiceMessage(BaseMessage):
     """Wrapper adapting generated models or simple fakes to the abstract Message interface."""
 
     def __init__(self, detail: Any) -> None:  # noqa: ANN401 - dynamic test doubles
+        """Create a ServiceMessage wrapper around a message-like object."""
         self._detail: Any = detail
 
     @property
     def id(self) -> str:
-        return cast(str, getattr(self._detail, "id", ""))
+        """Return the message identifier as a string."""
+        return cast("str", getattr(self._detail, "id", ""))
 
     @property
     def from_(self) -> str:
+        """Return the message sender address."""
         return str(getattr(self._detail, "from_", ""))
 
     @property
     def to(self) -> str:
+        """Return the message recipient(s)."""
         return str(getattr(self._detail, "to", ""))
 
     @property
     def date(self) -> str:
+        """Return the message date as a string."""
         return str(getattr(self._detail, "date", ""))
 
     @property
     def subject(self) -> str:
+        """Return the message subject, normalized to a string (empty if unset)."""
         subj = getattr(self._detail, "subject", "")
         if subj is None or isinstance(subj, Unset):
             return ""
@@ -44,6 +50,7 @@ class ServiceMessage(BaseMessage):
 
     @property
     def body(self) -> str:
+        """Return the message body as a string (may be empty for summaries)."""
         return str(getattr(self._detail, "body", ""))
 
 
@@ -142,8 +149,8 @@ class ServiceClientAdapter(AbstractClient):
         items = getattr(resp, "messages", None)
         if isinstance(items, list):
             for item in items:
-                if isinstance(item, (MessageSummary, MessageDetail)):
-                    yield ServiceMessage(item)
+                # Accept any message-like object (duck-typed)
+                yield ServiceMessage(item)
 
     def _iter_messages_via_generated_module(self, max_results: int) -> Iterator[BaseMessage]:
         from generated_client.mail_client_service_client.api.default import (  # noqa: PLC0415
@@ -156,8 +163,8 @@ class ServiceClientAdapter(AbstractClient):
             resp = list_messages_mod.sync(self._client, max_results)  # type: ignore[misc,arg-type]
         if isinstance(resp, list):
             for msg_summary in resp:
-                if isinstance(msg_summary, (MessageSummary, MessageDetail)):
-                    yield ServiceMessage(msg_summary)
+                # Accept SimpleNamespace or generated models
+                yield ServiceMessage(msg_summary)
 
     def get_message(self, message_id: str) -> BaseMessage:
         """Fetch a single message by ID from the service."""
@@ -165,61 +172,61 @@ class ServiceClientAdapter(AbstractClient):
             get_message_detail_messages_message_id_get as get_message_mod,
         )
 
+        candidate: Any
         if self._test_client is not None:
             res = self._test_client.get(f"/messages/{message_id}")
             res.raise_for_status()
             data = res.json()
             if isinstance(data, dict):
-                return ServiceMessage(MessageDetail(**data))  # type: ignore[arg-type]
-            # Fallback minimal detail
-            return ServiceMessage(
-                MessageDetail(id=message_id, from_="", to="", date="", subject="", body="")
-            )
-
-        if hasattr(self._client, "messages"):
+                candidate = MessageDetail(**data)  # type: ignore[arg-type]
+            else:
+                candidate = MessageDetail(id=message_id, from_="", to="", date="", subject="", body="")
+        elif hasattr(self._client, "messages"):
             msgs_api = self._client.messages
             try:
                 resp = msgs_api.get_message.sync(message_id=message_id)
             except TypeError:
                 resp = msgs_api.get_message.sync(message_id)
-            if isinstance(resp, (MessageDetail, MessageSummary)):
-                return ServiceMessage(resp)
-            return ServiceMessage(MessageDetail(  # type: ignore[call-arg]
-                id=message_id,
-                from_="",
-                to="",
-                date="",
-                subject="",
-                body="",
-            ))
+            # Accept any object with an id attribute (FakeDetail / SimpleNamespace) directly
+            if hasattr(resp, "id"):
+                candidate = resp
+            else:  # pragma: no cover - extremely unlikely
+                candidate = MessageDetail(  # type: ignore[call-arg]
+                    id=message_id,
+                    from_="",
+                    to="",
+                    date="",
+                    subject="",
+                    body="",
+                )
+        else:
+            try:
+                resp = get_message_mod.sync(client=self._client, message_id=message_id)
+            except TypeError:
+                resp = get_message_mod.sync(self._client, message_id)  # type: ignore[misc,arg-type]
 
-        try:
-            resp = get_message_mod.sync(client=self._client, message_id=message_id)
-        except TypeError:
-            resp = get_message_mod.sync(self._client, message_id)  # type: ignore[misc,arg-type]
+            if isinstance(resp, dict):  # type: ignore[redundant-expr]
+                candidate = MessageDetail(  # type: ignore[call-arg]
+                    id=str(resp.get("id", message_id)),
+                    from_=str(resp.get("from_", "")),
+                    to=str(resp.get("to", "")),
+                    date=str(resp.get("date", "")),
+                    subject=str(resp.get("subject", "")),
+                    body=str(resp.get("body", "")),
+                )
+            elif hasattr(resp, "id"):
+                candidate = resp
+            else:
+                candidate = MessageDetail(  # type: ignore[call-arg]
+                    id=message_id,
+                    from_="",
+                    to="",
+                    date="",
+                    subject="",
+                    body="",
+                )
 
-        # If we got a dict-like payload, coerce to a MessageDetail for property access
-        if isinstance(resp, dict):  # type: ignore[redundant-expr]
-            candidate = MessageDetail(  # type: ignore[call-arg]
-                id=str(resp.get("id", message_id)),
-                from_=str(resp.get("from_", "")),
-                to=str(resp.get("to", "")),
-                date=str(resp.get("date", "")),
-                subject=str(resp.get("subject", "")),
-                body=str(resp.get("body", "")),
-            )
-            return ServiceMessage(candidate)
-
-        if isinstance(resp, (MessageDetail, MessageSummary)):
-            return ServiceMessage(resp)
-        return ServiceMessage(MessageDetail(  # type: ignore[call-arg]
-            id=message_id,
-            from_="",
-            to="",
-            date="",
-            subject="",
-            body="",
-        ))
+        return ServiceMessage(candidate)
 
     def delete_message(self, message_id: str) -> bool:
         """Delete a message by ID from the service."""
