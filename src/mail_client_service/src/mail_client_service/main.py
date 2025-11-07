@@ -31,7 +31,16 @@ def get_client_dep() -> mail_client_api.Client:
     Keep behavior simple for tests: return the client or propagate the original error.
     """
     # Use positional arg for tests that stub get_client without keyword name
-    return mail_client_api.get_client(True)  # noqa: FBT003
+    try:
+        return mail_client_api.get_client(True)  # noqa: FBT003
+    except NotImplementedError:
+        # Attempt late registration if implementations are importable
+        try:
+            from gmail_client_impl import register as register_gmail  # noqa: PLC0415
+            register_gmail()
+            return mail_client_api.get_client(True)  # noqa: FBT003
+        except Exception:  # pragma: no cover - best effort fallback
+            raise
 
 
 class MessageSummary(BaseModel):

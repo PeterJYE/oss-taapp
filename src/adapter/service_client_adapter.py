@@ -28,23 +28,18 @@ class ServiceMessage(BaseMessage):
     @property
     def from_(self) -> str:
         """Return the sender address."""
-        if isinstance(self._detail, MessageDetail):
-            return self._detail.from_
-        return ""
+        # Support both generated models and simple fakes via duck typing
+        return str(getattr(self._detail, "from_", ""))
 
     @property
     def to(self) -> str:
         """Return the recipient address."""
-        if isinstance(self._detail, MessageDetail):
-            return self._detail.to
-        return ""
+        return str(getattr(self._detail, "to", ""))
 
     @property
     def date(self) -> str:
         """Return the message date."""
-        if isinstance(self._detail, MessageDetail):
-            return self._detail.date
-        return ""
+        return str(getattr(self._detail, "date", ""))
 
     @property
     def subject(self) -> str:
@@ -57,9 +52,7 @@ class ServiceMessage(BaseMessage):
     @property
     def body(self) -> str:
         """Return the message body, empty string if only summary available."""
-        if isinstance(self._detail, MessageDetail):
-            return self._detail.body
-        return ""
+        return str(getattr(self._detail, "body", ""))
 
 
 @runtime_checkable

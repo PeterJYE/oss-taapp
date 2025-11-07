@@ -117,6 +117,7 @@ omit = [
   "src/openai_client_service/**",
   "src/openai_service_api/**",
   "src/adapter/**",
+  "src/openai_adapter/**",
 ]
 
 [tool.coverage.report]
