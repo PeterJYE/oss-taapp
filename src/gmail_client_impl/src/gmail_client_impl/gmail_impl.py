@@ -16,6 +16,8 @@ from pathlib import Path
 from typing import ClassVar
 from typing import Optional
 
+from mail_client_api.client import Client as AbstractClient
+from mail_client_api.message import Message as AbstractMessage
 from mail_client_api import message
 import mail_client_api
 from google.auth.exceptions import GoogleAuthError, RefreshError
@@ -44,7 +46,7 @@ except ImportError:
                     os.environ[key.strip()] = value.strip()
 
 
-class GmailClient(mail_client_api.Client):
+class GmailClient(AbstractClient):
     """Concrete implementation of the Client abstraction using Gmail API.
 
     This class provides a complete implementation of the mail_client_api.Client abstraction
@@ -212,7 +214,7 @@ class GmailClient(mail_client_api.Client):
         with Path(token_path).open("w") as token:
             token.write(creds.to_json())  # type: ignore[no-untyped-call]
 
-    def get_message(self, message_id: str) -> message.Message:
+    def get_message(self, message_id: str) -> AbstractMessage:
         """Retrieve a specific message by its ID.
 
         Args:
@@ -298,7 +300,7 @@ class GmailClient(mail_client_api.Client):
         else:
             return True
 
-    def get_messages(self, max_results: int = 10) -> Iterator[message.Message]:
+    def get_messages(self, max_results: int = 10) -> Iterator[AbstractMessage]:
         """Retrieve messages from the Gmail inbox.
 
         This method fetches a list of message summaries from the Gmail API,

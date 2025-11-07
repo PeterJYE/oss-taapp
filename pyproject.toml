@@ -75,7 +75,6 @@ mypy_path = [
   "src/openai_adapter/src",
   "src/ai_adapter/src",
   
-  "src/message/src",
 ]
 ignore_missing_imports = false
 warn_unused_ignores = false
@@ -88,6 +87,12 @@ module = [
     "openai_client_service_api_client.*",
 ]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = [
+  "generated_client.*",
+]
+ignore_errors = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "src/*/tests"]

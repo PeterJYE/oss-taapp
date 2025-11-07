@@ -7,10 +7,10 @@ import email.utils
 from email.message import Message as EmailMessage
 
 import mail_client_api
-from mail_client_api import message
+from mail_client_api.message import Message as AbstractMessage
 
 
-class GmailMessage(message.Message):
+class GmailMessage(AbstractMessage):
     """Concrete implementation of the Message abstraction for Gmail messages."""
 
     MAX_PRINTABLE_ASCII = 126
@@ -198,12 +198,12 @@ class GmailMessage(message.Message):
         return body_content
 
 
-def get_message_impl(msg_id: str, raw_data: str) -> message.Message:
+def get_message_impl(msg_id: str, raw_data: str) -> AbstractMessage:
     """Return an instance of the concrete GmailMessage implementation."""
     return GmailMessage(msg_id=msg_id, raw_data=raw_data)
 
 
-def get_message(msg_id: str, raw_data: str) -> message.Message:  # noqa: D401
+def get_message(msg_id: str, raw_data: str) -> AbstractMessage:  # noqa: D401
     """Compatibility alias for get_message_impl used by tests."""
     return get_message_impl(msg_id=msg_id, raw_data=raw_data)
 
@@ -214,8 +214,8 @@ def register() -> None:
     try:
         mail_client_api.message.get_message = get_message_impl  # type: ignore[attr-defined]
     except Exception:
-        # Fallback: update the module object this file imported earlier
-        message.get_message = get_message_impl
+        # Fallback: if top-level shim module is not available
+        pass
 
     # Also set the top-level factory function on the abstract package
     mail_client_api.get_message = get_message_impl
