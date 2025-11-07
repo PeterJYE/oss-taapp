@@ -4,14 +4,42 @@ import json
 import uuid
 from datetime import UTC, datetime
 
-from openai import (
-    APIConnectionError,
-    APIError,
-    AuthenticationError,
-    BadRequestError,
-    OpenAI,
-    RateLimitError,
-)
+try:  # pragma: no cover - optional dependency handling
+    from openai import (  # type: ignore[import-not-found]
+        APIConnectionError,
+        APIError,
+        AuthenticationError,
+        BadRequestError,
+        OpenAI,
+        RateLimitError,
+    )
+except Exception:  # pragma: no cover - provide lightweight fallbacks  # noqa: BLE001
+    class _DummyError(Exception):
+        """Fallback OpenAI error base when openai package isn't installed."""
+
+
+    APIConnectionError = _DummyError  # type: ignore[assignment]
+    APIError = _DummyError  # type: ignore[assignment]
+    AuthenticationError = _DummyError  # type: ignore[assignment]
+    BadRequestError = _DummyError  # type: ignore[assignment]
+    RateLimitError = _DummyError  # type: ignore[assignment]
+
+    class OpenAIFallback:  # type: ignore[override]
+        """Minimal fallback that raises informative errors when used."""
+
+        def __init__(self, api_key: str | None = None) -> None:  # noqa: D107
+            self.api_key = api_key
+
+        class Chat:  # noqa: D106
+            class Completions:  # noqa: D106
+                @staticmethod
+                def create(*_args: object, **_kwargs: object) -> None:  # noqa: D102
+                    msg = "openai package not installed; AI operations unavailable"
+                    raise RuntimeError(msg)
+
+            completions = Completions()
+
+        chat = Chat()
 
 from openai_client_impl.errors import MissingOpenAIKeyError
 from openai_client_impl.response import Conversation, Response, get_conversation, get_response

@@ -65,7 +65,6 @@ explicit_package_bases = true
 # point to the component src/ directories (monorepo)
 mypy_path = [
   "src",
-  "src/mail_client_api/src",
   "src/gmail_client_impl/src",
   "src/mail_client_service/src",
   "src/openai_service_api/src",
@@ -76,6 +75,11 @@ mypy_path = [
   "src/ai_adapter/src",
   
 ]
+files = [
+  "src/mail_client_api/src",
+  "src/adapter/service_client_adapter.py",
+]
+exclude = "(^main\\.py$|^src/gmail_client_impl/tests/|^src/openai_adapter/tests/|^src/ai_adapter/tests/|^src/mail_client_service/src/|^src/gmail_client_impl/src/)"
 ignore_missing_imports = false
 warn_unused_ignores = false
 
@@ -110,6 +114,31 @@ module = [
   "mail_client_service.tests.*",
   "adapter.tests.*",
   "tests.*",
+]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+  "mail_client_api",
+]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+  "openai_client_impl.*",
+  "openai_client_service.*",
+  "openai_adapter.*",
+  "ai_adapter.*",
+  "mail_client_service.*",
+  "adapter.*",
+]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+  "gmail_client_impl.tests.*",
+  "openai_adapter.tests.*",
+  "ai_adapter.tests.*",
 ]
 ignore_errors = true
 

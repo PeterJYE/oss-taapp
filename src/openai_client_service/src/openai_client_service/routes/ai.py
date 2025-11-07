@@ -3,10 +3,16 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from openai_service_api.client import AIClient
 from pydantic import BaseModel
 
-from openai_client_impl import MissingOpenAIKeyError  # type: ignore[attr-defined]
+try:  # pragma: no cover - optional dependency for environments without openai/crypto
+    from openai_client_impl import MissingOpenAIKeyError  # type: ignore[attr-defined]
+except Exception:  # pragma: no cover - define a fallback exception type  # noqa: BLE001
+    class MissingOpenAIKeyError(Exception):
+        """Fallback error used when openai_client_impl is unavailable."""
+
 from openai_client_service.dependencies import get_ai_client
 
 router = APIRouter()
@@ -42,14 +48,17 @@ def generate_response(
     """
     try:
         response = aiclient.generate_response(request.messages, conversation_id=request.conversation_id)
-    except MissingOpenAIKeyError as e:
-        raise HTTPException(
-            status_code=401,
-            detail={
-                "error": str(e),
-                "hint": "POST /auth/set-openai-key first to set your OpenAI API key.",
-            },
-        ) from e
+    except Exception as e:
+        # Accept both real MissingOpenAIKeyError and fallback class from dependencies module
+        if "OpenAI API key" in str(e):
+            return JSONResponse(
+                status_code=401,
+                content={
+                    "error": "OpenAI API key is not set",
+                    "hint": "POST /auth/set-openai-key first to set your OpenAI API key.",
+                },
+            )
+        raise
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except RuntimeError as e:
@@ -62,8 +71,16 @@ def generate_response(
         }
 
 
+class CreateConversationRequest(BaseModel):  # type: ignore[misc]
+    """Empty request model so OpenAPI includes a requestBody."""
+
+
+
 @router.post("/conversations")  # type: ignore[misc]
-def create_conversation(aiclient: Annotated[AIClient, Depends(get_ai_client)]) -> dict[str, str]:
+def create_conversation(
+    aiclient: Annotated[AIClient, Depends(get_ai_client)],
+    _payload: CreateConversationRequest | None = None,
+) -> dict[str, str]:
     """Create a new conversation and return its ID.
 
     Args:
@@ -78,14 +95,14 @@ def create_conversation(aiclient: Annotated[AIClient, Depends(get_ai_client)]) -
     """
     try:
         conv_id = aiclient.create_conversation()
-    except MissingOpenAIKeyError as e:
-        raise HTTPException(
+    except MissingOpenAIKeyError:
+        return JSONResponse(
             status_code=401,
-            detail={
-                "error": str(e),
+            content={
+                "error": "OpenAI API key is not set",
                 "hint": "POST /auth/set-openai-key first to set your OpenAI API key.",
             },
-        ) from e
+        )
     except RuntimeError as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
     else:
@@ -112,14 +129,14 @@ def get_conversation(
     """
     try:
         conversation = aiclient.get_conversation(conversation_id)
-    except MissingOpenAIKeyError as e:
-        raise HTTPException(
+    except MissingOpenAIKeyError:
+        return JSONResponse(
             status_code=401,
-            detail={
-                "error": str(e),
+            content={
+                "error": "OpenAI API key is not set",
                 "hint": "POST /auth/set-openai-key first to set your OpenAI API key.",
             },
-        ) from e
+        )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     else:
@@ -150,14 +167,14 @@ def delete_conversation(
     """
     try:
         success = aiclient.delete_conversation(conversation_id)
-    except MissingOpenAIKeyError as e:
-        raise HTTPException(
+    except MissingOpenAIKeyError:
+        return JSONResponse(
             status_code=401,
-            detail={
-                "error": str(e),
+            content={
+                "error": "OpenAI API key is not set",
                 "hint": "POST /auth/set-openai-key first to set your OpenAI API key.",
             },
-        ) from e
+        )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     else:

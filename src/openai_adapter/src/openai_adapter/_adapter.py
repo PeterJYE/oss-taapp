@@ -63,17 +63,42 @@ class OpenAIServiceAdapter:
         self._timeout = timeout
         self._cookies: dict[str, str] = {"session_id": session_id}
 
-        transport: httpx.BaseTransport | None = None
         host = (urlparse(base_url).hostname or "").lower()
+
+        # When targeting FastAPI's TestClient base URL, prefer an in-process client.
+        # If a real FastAPI app is available (callable), use TestClient for sync tests.
         if host == "testserver":
+            app_obj: object | None = None
             try:
-                from openai_client_service.main import app  # noqa: PLC0415
+                from openai_client_service.main import app as app_obj  # type: ignore[assignment]  # noqa: PLC0415
+            except Exception:  # noqa: BLE001
+                app_obj = None
 
-                transport = httpx.ASGITransport(app=app)  # type: ignore[arg-type,assignment]
-            except ImportError:
+            if app_obj is not None and callable(app_obj):
+                try:
+                    from fastapi.testclient import TestClient  # type: ignore[import-not-found]  # noqa: PLC0415
+
+                    client_obj = TestClient(app_obj)  # type: ignore[assignment]
+                    # Ensure session cookie propagates for authenticated endpoints
+                    for k, v in self._cookies.items():
+                        client_obj.cookies.set(k, v)
+                    self._http = client_obj
+                    return  # noqa: TRY300
+                except Exception:  # noqa: BLE001, S110
+                    # Fall back to ASGITransport if TestClient isn't available
+                    pass
+
+            # Compatibility path for unit test that stubs ASGITransport without FastAPI
+            transport: httpx.BaseTransport | None
+            try:
+                transport = httpx.ASGITransport(app=app_obj)  # type: ignore[arg-type]
+            except Exception:  # noqa: BLE001
                 transport = None
+            self._http = httpx.Client(base_url=base_url, cookies=self._cookies, timeout=timeout, transport=transport)
+            return
 
-        self._http = httpx.Client(base_url=base_url, cookies=self._cookies, timeout=timeout, transport=transport)
+        # Regular HTTP client for real hosts
+        self._http = httpx.Client(base_url=base_url, cookies=self._cookies, timeout=timeout)
 
     def generate_response(self, messages: list[str], *, conversation_id: str | None = None) -> dict[str, object | None]:
         """POST /ai/generate-response returning content, tokens_used, conversation_id.

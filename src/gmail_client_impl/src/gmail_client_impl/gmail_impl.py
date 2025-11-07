@@ -24,7 +24,7 @@ import mail_client_api
 from google.auth.exceptions import GoogleAuthError, RefreshError
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore[import-untyped]
+from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import Resource, build
 from googleapiclient.errors import HttpError
 # from mail_client_api import message
@@ -229,7 +229,7 @@ class GmailClient(AbstractClient):
 
         """
         msg_data = (
-            self.service.users()  # type: ignore[attr-defined]
+              self.service.users()
             .messages()
             .get(userId="me", id=message_id, format="raw")
             .execute()
@@ -269,7 +269,7 @@ class GmailClient(AbstractClient):
 
         try:
             (
-                self.service.users()  # type: ignore[attr-defined]
+                    self.service.users()
                 .messages()
                 .delete(userId="me", id=message_id)
                 .execute()
@@ -285,7 +285,7 @@ class GmailClient(AbstractClient):
         """Mark a message as read."""
         try:
             (
-                self.service.users()  # type: ignore[attr-defined]
+                    self.service.users()
                 .messages()
                 .modify(
                     userId="me",
@@ -317,7 +317,7 @@ class GmailClient(AbstractClient):
 
         """
         results = (
-            self.service.users()  # type: ignore[attr-defined]
+                self.service.users()
             .messages()
             .list(userId="me", maxResults=max_results)
             .execute()
@@ -329,7 +329,7 @@ class GmailClient(AbstractClient):
                 continue
 
             msg_data = (
-                self.service.users()  # type: ignore[attr-defined]
+                    self.service.users()
                 .messages()
                 .get(userId="me", id=msg_summary["id"], format="raw")
                 .execute()
@@ -362,5 +362,5 @@ def get_client(*, interactive: bool = False) -> mail_client_api.Client:  # noqa:
 
 def register() -> None:
     """Register the Gmail client implementation with the mail client API."""
-    # Point the abstract factory directly to the concrete implementation
-    mail_client_api.get_client = get_client_impl
+    # Point the abstract factory to the public alias `get_client` used by tests
+    mail_client_api.get_client = get_client

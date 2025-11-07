@@ -191,8 +191,9 @@ def test_constructor_uses_asgi_transport_when_testserver(monkeypatch: pytest.Mon
     fake_pkg = types.ModuleType("openai_client_service")
     fake_main = types.ModuleType("openai_client_service.main")
     fake_main.app = object()
-    sys.modules["openai_client_service"] = fake_pkg
-    sys.modules["openai_client_service.main"] = fake_main
+    # Use monkeypatch to ensure modules are restored after test
+    monkeypatch.setitem(sys.modules, "openai_client_service", fake_pkg)
+    monkeypatch.setitem(sys.modules, "openai_client_service.main", fake_main)
 
     called = {"count": 0}
 

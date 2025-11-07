@@ -114,17 +114,19 @@ class ServiceClientAdapter(AbstractClient):
 
     def get_messages(self, max_results: int = 10) -> Iterator[BaseMessage]:
         """Fetch messages from the service."""
-        # Try test client first
-        yield from self._iter_messages_via_test_client(max_results)
-        # Then generated-style attribute client
         yielded = False
+        for m in self._iter_messages_via_test_client(max_results):
+            yielded = True
+            yield m
+        if yielded:
+            return
         for m in self._iter_messages_via_attr_client(max_results):
             yielded = True
             yield m
         if yielded:
             return
-        # Finally, generated sync module fallback
-        yield from self._iter_messages_via_generated_module(max_results)
+        for m in self._iter_messages_via_generated_module(max_results):
+            yield m
 
     def _iter_messages_via_test_client(self, max_results: int) -> Iterator[BaseMessage]:
         if self._test_client is None:

@@ -12,7 +12,13 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
-from openai_client_impl import set_openai_key  # type: ignore[attr-defined]
+try:  # pragma: no cover - optional dependency
+    from openai_client_impl import set_openai_key  # type: ignore[attr-defined]
+except Exception:  # pragma: no cover  # noqa: BLE001
+    def set_openai_key(_subject: str, _api_key: str) -> None:
+        """Fallback no-op when implementation is unavailable."""
+        msg = "AI client implementation unavailable"
+        raise RuntimeError(msg)
 from openai_client_service.dependencies import (
     _create_session,
     _destroy_session,
@@ -144,7 +150,7 @@ def _extract_subject(token_json: dict[str, object], cfg: dict[str, str]) -> str 
             if isinstance(sub, str) and sub:
                 return sub
     except (httpx.HTTPError, ValueError, KeyError):
-        pass
+        return None
 
     return None
 

@@ -1,6 +1,7 @@
 """Message contract - Core message representation."""
 
 from abc import ABC, abstractmethod
+from contextlib import suppress
 
 
 class Message(ABC):
@@ -43,18 +44,13 @@ class Message(ABC):
         raise NotImplementedError
 
 
-def get_message(msg_id: str, raw_data: str) -> Message:
-    """Return an instance of a Message.
+def get_message(_msg_id: str, _raw_data: str) -> Message:
+    """Return a concrete message instance (implementation registered externally).
 
-    Args:
-        msg_id (str): The unique identifier for the message.
-        raw_data (str): The raw data used to construct the message.
-
-    Returns:
-    Message: An instance conforming to the Message contract.
-
-    Raises:
-        NotImplementedError: If the function is not overridden by an implementation.
-
+    Performs a lazy import to trigger implementation auto-registration. Always
+    raises NotImplementedError until an implementation rebinds this name.
     """
-    raise NotImplementedError
+    with suppress(Exception):  # pragma: no cover - optional dependency path
+        import gmail_client_impl  # noqa: F401, PLC0415
+    err = "No message implementation registered"
+    raise NotImplementedError(err)
