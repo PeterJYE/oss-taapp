@@ -1,9 +1,8 @@
 """Public exports for the Gmail client implementation package.
 
-On import, this module automatically registers the concrete Gmail client and
-message factory with the abstract `mail_client_api` package so tests that rely
-on side-effectful imports (dependency injection) succeed without explicitly
-calling a register() function.
+This package exposes explicit `register()` to bind concrete implementations to
+the abstract `mail_client_api` factories. Importing this package DOES NOT
+modify global factories; tests can opt-in by calling `gmail_client_impl.register()`.
 """
 
 from gmail_client_impl.gmail_impl import (  # noqa: PLC0415
@@ -19,17 +18,13 @@ import importlib
 import mail_client_api as _api  # noqa: PLC0415
 
 
-def _auto_register() -> None:
-    """Automatically wire concrete implementations into abstract factories.
-
-    Idempotent and safe to call multiple times.
-    """
+def _bind_factories() -> None:
+    """Wire concrete implementations into abstract factories (idempotent)."""
     _api.get_client = get_client_impl  # type: ignore[attr-defined]
     try:
         msg_mod = importlib.import_module("mail_client_api.message")
         setattr(msg_mod, "get_message", get_message_impl)
     except Exception:
-        # If the shim module layout differs, attempt inner src layout
         try:
             inner_mod = importlib.import_module("mail_client_api.src.mail_client_api.message")
             setattr(inner_mod, "get_message", get_message_impl)
@@ -38,12 +33,8 @@ def _auto_register() -> None:
 
 
 def register() -> None:  # noqa: D401
-    """Compatibility manual registration entrypoint (calls auto-register)."""
-    _auto_register()
-
-
-# Perform automatic registration on import
-_auto_register()
+    """Manually bind concrete implementations to abstract factories."""
+    _bind_factories()
 
 __all__ = [
     "GmailClient",
