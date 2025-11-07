@@ -73,13 +73,13 @@ def list_messages(
 
     summaries: list[MessageSummary] = []
     try:
-        for msg in messages_iter:
-            summaries.append(
-                MessageSummary(
-                    id=msg.id,
-                    subject=msg.subject if msg.subject else None,
-                )
+        summaries = [
+            MessageSummary(
+                id=msg.id,
+                subject=msg.subject if msg.subject else None,
             )
+            for msg in messages_iter
+        ]
     except Exception as e:
         logger.exception("Error iterating messages")
         raise HTTPException(status_code=500, detail="Error processing messages") from e

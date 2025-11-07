@@ -1,12 +1,12 @@
 """Adapter that converts the mail client service API into the abstract mail_client_api interface."""
 
 from collections.abc import Iterator
-from typing import Any, Protocol, runtime_checkable, cast
 from http import HTTPStatus
+from typing import Protocol, cast, runtime_checkable
 from urllib.parse import urlparse
 
-from generated_client.models import MessageDetail, MessageSummary
 from generated_client.mail_client_service_client.types import Unset
+from generated_client.models import MessageDetail, MessageSummary
 from mail_client_api.client import Client as AbstractClient
 from mail_client_api.message import Message as BaseMessage
 
@@ -64,9 +64,9 @@ class ServiceMessage(BaseMessage):
 
 @runtime_checkable
 class _RequestsLike(Protocol):
-    def get(self, path: str, params: dict[str, Any] | None = ...) -> Any: ...
-    def delete(self, path: str) -> Any: ...
-    def post(self, path: str) -> Any: ...
+    def get(self, path: str, params: dict[str, object] | None = ...) -> object: ...
+    def delete(self, path: str) -> object: ...
+    def post(self, path: str) -> object: ...
 
 
 class ServiceClientAdapter(AbstractClient):
@@ -103,7 +103,7 @@ class ServiceClientAdapter(AbstractClient):
 
                 from mail_client_service import app as mail_app  # noqa: PLC0415
 
-                self._test_client = cast(_RequestsLike, TestClient(mail_app))
+                self._test_client = cast("_RequestsLike", TestClient(mail_app))
             except (ImportError, AttributeError):
                 self._test_client = None
 

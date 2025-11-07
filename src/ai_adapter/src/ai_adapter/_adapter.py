@@ -11,8 +11,8 @@ Endpoints:
 """
 from __future__ import annotations
 
-from urllib.parse import urlparse
 from typing import cast
+from urllib.parse import urlparse
 
 import httpx
 
@@ -58,7 +58,7 @@ class OpenAIServiceAdapter:
         if host == "testserver":
             try:
                 from openai_client_service.main import app  # noqa: PLC0415 - lazy import for tests
-                transport = cast(httpx.BaseTransport, httpx.ASGITransport(app=app))
+                transport = cast("httpx.BaseTransport", httpx.ASGITransport(app=app))
             except ImportError:
                 transport = None
 
@@ -103,7 +103,7 @@ class OpenAIServiceAdapter:
             raise AdapterNetworkError(exc) from exc
         if r.status_code >= HTTP_BAD:
             raise AdapterAPIError(r.status_code, r.content)
-        return cast(dict[str, object], r.json())
+        return cast("dict[str, object]", r.json())
 
     def delete_conversation(self, conversation_id: str) -> bool:
         """DELETE /ai/conversations/{id} -> returns ok boolean in body."""
