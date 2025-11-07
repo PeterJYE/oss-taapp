@@ -1,12 +1,11 @@
 """Core mail client contract definitions and factory placeholder."""
 
 from abc import ABC, abstractmethod
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import suppress
+from typing import cast
 
 from .message import Message
-
-from typing import TYPE_CHECKING, Callable, Any, cast
 
 
 class Client(ABC):
@@ -50,7 +49,7 @@ def get_client(*, interactive: bool = False) -> Client:
     new_factory = globals().get("get_client")
     if new_factory is not get_client:
         # Narrow type: expect a callable returning Client
-        impl = cast(Callable[..., Client], new_factory)
+        impl = cast("Callable[..., Client]", new_factory)
         return impl(interactive=interactive)
 
     err = "No mail client implementation registered"
