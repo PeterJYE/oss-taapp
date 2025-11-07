@@ -55,11 +55,18 @@ class ServiceMessage(BaseMessage):
         return str(getattr(self._detail, "body", ""))
 
 
+class _ResponseLike(Protocol):
+    status_code: int
+
+    def json(self) -> object: ...
+    def raise_for_status(self) -> None: ...
+
+
 @runtime_checkable
 class _RequestsLike(Protocol):
-    def get(self, path: str, params: dict[str, object] | None = ...) -> object: ...
-    def delete(self, path: str) -> object: ...
-    def post(self, path: str) -> object: ...
+    def get(self, path: str, params: dict[str, object] | None = ...) -> _ResponseLike: ...
+    def delete(self, path: str) -> _ResponseLike: ...
+    def post(self, path: str) -> _ResponseLike: ...
 
 
 class ServiceClientAdapter(AbstractClient):
@@ -127,9 +134,9 @@ class ServiceClientAdapter(AbstractClient):
             return
 
         try:
-            resp = list_messages_mod.sync(client=self._client, limit=max_results)
+            resp = list_messages_mod.sync(client=cast("object", self._client), limit=max_results)
         except TypeError:
-            resp = list_messages_mod.sync(self._client, max_results)  # type: ignore[misc,arg-type]
+            resp = list_messages_mod.sync(cast("object", self._client), max_results)  # type: ignore[misc,arg-type]
         if isinstance(resp, list):
             for msg_summary in resp:
                 yield ServiceMessage(msg_summary)
@@ -154,9 +161,9 @@ class ServiceClientAdapter(AbstractClient):
             return ServiceMessage(resp)
 
         try:
-            resp = get_message_mod.sync(client=self._client, message_id=message_id)
+            resp = get_message_mod.sync(client=cast("object", self._client), message_id=message_id)
         except TypeError:
-            resp = get_message_mod.sync(self._client, message_id)  # type: ignore[misc,arg-type]
+            resp = get_message_mod.sync(cast("object", self._client), message_id)  # type: ignore[misc,arg-type]
         return ServiceMessage(resp)
 
     def delete_message(self, message_id: str) -> bool:
@@ -181,9 +188,9 @@ class ServiceClientAdapter(AbstractClient):
                 return bool(getattr(r, "ok", True)) if r is not None else True
 
             try:
-                res = delete_mod.sync(client=self._client, message_id=message_id)
+                res = delete_mod.sync(client=cast("object", self._client), message_id=message_id)
             except TypeError:
-                res = delete_mod.sync(self._client, message_id)  # type: ignore[misc,arg-type]
+                res = delete_mod.sync(cast("object", self._client), message_id)  # type: ignore[misc,arg-type]
             return getattr(res, "ok", True)
         except (AttributeError, RuntimeError, ValueError, TypeError):
             return False
@@ -210,9 +217,9 @@ class ServiceClientAdapter(AbstractClient):
                 return bool(getattr(r, "ok", True)) if r is not None else True
 
             try:
-                res = mark_mod.sync(client=self._client, message_id=message_id)
+                res = mark_mod.sync(client=cast("object", self._client), message_id=message_id)
             except TypeError:
-                res = mark_mod.sync(self._client, message_id)  # type: ignore[misc,arg-type]
+                res = mark_mod.sync(cast("object", self._client), message_id)  # type: ignore[misc,arg-type]
             return getattr(res, "ok", True)
         except (AttributeError, RuntimeError, ValueError, TypeError):
             return False

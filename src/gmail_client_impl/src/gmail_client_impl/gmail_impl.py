@@ -18,6 +18,7 @@ from typing import Optional
 
 from mail_client_api.client import Client as AbstractClient
 from mail_client_api.message import Message as AbstractMessage
+from typing import cast
 from mail_client_api import message
 import mail_client_api
 from google.auth.exceptions import GoogleAuthError, RefreshError
@@ -239,10 +240,10 @@ class GmailClient(AbstractClient):
             msg = f"No raw content found for message {message_id}"
             raise ValueError(msg)
 
-        return message.get_message(
+        return cast(AbstractMessage, message.get_message(
             msg_id=message_id,
             raw_data=raw_content,
-        )
+        ))
 
     def delete_message(self, message_id: str) -> bool:
         """Delete a message from the mailbox.

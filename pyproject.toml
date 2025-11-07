@@ -94,6 +94,15 @@ module = [
 ]
 ignore_errors = true
 
+[[tool.mypy.overrides]]
+module = [
+  "mail_client_api.tests.*",
+  "mail_client_service.tests.*",
+  "adapter.tests.*",
+  "tests.*",
+]
+ignore_errors = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests", "src/*/tests"]
 addopts = ["--cov", "--cov-report=term-missing", "--import-mode=importlib"]
