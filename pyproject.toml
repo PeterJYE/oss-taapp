@@ -55,9 +55,7 @@ namespace_packages = true
 mypy_path = [
     "src/mail_client_api/src",
     "src/gmail_client_impl/src",
-    "src/mail_client_service/src",
-    "src/adapter",
-    "src/generated_client",       
+    "src/mail_client_service/src",     
     "src/openai_service_api/src",
     "src/openai_client_impl/src",
     "src/openai_client_service/src",
