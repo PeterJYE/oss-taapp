@@ -3,7 +3,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
-from openai_service_api.client import AIClient
+from openai_service_api import AIClient
 from pydantic import BaseModel
 
 from openai_client_impl import MissingOpenAIKeyError  # type: ignore[attr-defined]
