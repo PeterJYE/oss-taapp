@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from openai_service_api.response import Conversation, Response
+from openai_service_api.src.openai_service_api.response import Conversation, Response
 
 
 class AIClient(ABC):

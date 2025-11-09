@@ -52,7 +52,6 @@ ignore = [
 strict = true
 explicit_package_bases = false
 namespace_packages = true
-
 mypy_path = ["src"]
 exclude = "(^|/)tests(/|$)"
 ignore_missing_imports = false
@@ -60,7 +59,6 @@ warn_unused_ignores = false
 
 [[tool.mypy.overrides]]
 module = [
-    "openai_service_api.*",
     "openai_client_impl.*",
     "openai_client_service.*",
     "openai_client_service_api_client.*",

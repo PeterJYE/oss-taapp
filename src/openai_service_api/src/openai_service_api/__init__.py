@@ -1,1 +1,2 @@
-"""Public export surface for ``openai_service_api``."""
+"""Namespace package for the OpenAI service API."""
+

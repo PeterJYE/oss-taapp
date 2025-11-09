@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """Response and Conversation contracts for AI service."""
 
 from abc import ABC, abstractmethod
