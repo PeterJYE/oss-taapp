@@ -25,14 +25,31 @@ HTTP_BAD = 400
 
 def _load_test_client() -> tuple[Any | None, Any | None]:
     """Attempt to import FastAPI's TestClient and the service app lazily."""
+    test_client_cls: Any | None = None
+    service_app: Any | None = None
+
     try:
         testclient_mod = import_module("fastapi.testclient")
-        service_mod = import_module("openai_client_service.main")
     except ImportError:
-        return None, None
-    test_client_cls = getattr(testclient_mod, "TestClient", None)
-    app = getattr(service_mod, "app", None)
-    return test_client_cls, app
+        testclient_mod = None
+    if testclient_mod is not None:
+        test_client_cls = getattr(testclient_mod, "TestClient", None)
+
+    candidate_modules = [
+        "openai_client_service.main",
+        "openai_client_service.src.openai_client_service.main",
+    ]
+    for module_name in candidate_modules:
+        try:
+            service_mod = import_module(module_name)
+        except ImportError:
+            continue
+        app_candidate = getattr(service_mod, "app", None)
+        if app_candidate is not None and callable(app_candidate):
+            service_app = app_candidate
+            break
+
+    return test_client_cls, service_app
 
 
 class AdapterError(Exception):
