@@ -4,10 +4,23 @@ Note: These tests are deprecated. Use test_main_endpoints.py instead.
 This file may have import issues due to the package structure.
 """
 
+from __future__ import annotations
+
 from http import HTTPStatus
 from unittest.mock import AsyncMock
 
 import pytest
+
+try:
+    from fastapi.testclient import TestClient
+except ImportError:  # pragma: no cover
+    TestClient = None  # type: ignore[assignment]
+
+try:
+    from mail_client_service.main import app, get_client_dep  # type: ignore[assignment]
+except ImportError:  # pragma: no cover
+    app = None  # type: ignore[assignment]
+    get_client_dep = None  # type: ignore[assignment]
 
 HTTP_OK = HTTPStatus.OK
 
@@ -17,7 +30,8 @@ HTTP_OK = HTTPStatus.OK
 def mock_client(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
     """Fixture to mock the mail client for all tests."""
     pytest.importorskip("fastapi")
-    from mail_client_service.main import app, get_client_dep  # noqa: PLC0415
+    assert app is not None
+    assert get_client_dep is not None
 
     mock = AsyncMock()
 
@@ -48,8 +62,8 @@ def mock_client(monkeypatch: pytest.MonkeyPatch) -> AsyncMock:
 def client() -> object:
     """Create a test client."""
     pytest.importorskip("fastapi")
-    from fastapi.testclient import TestClient  # noqa: PLC0415
-    from mail_client_service.main import app  # noqa: PLC0415
+    assert TestClient is not None
+    assert app is not None
 
     return TestClient(app)
 

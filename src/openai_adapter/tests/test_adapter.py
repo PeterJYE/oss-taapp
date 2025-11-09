@@ -36,15 +36,15 @@ class DummyHTTP:
         """Create a dummy HTTP client that always returns ``resp``."""
         self._resp = resp
 
-    def post(self, _path: str, _json: dict[str, object] | None = None) -> DummyResp:
+    def post(self, _path: str, **_kwargs: object) -> DummyResp:
         """Return the configured response for POST requests."""
         return self._resp
 
-    def get(self, _path: str) -> DummyResp:
+    def get(self, _path: str, **_kwargs: object) -> DummyResp:
         """Return the configured response for GET requests."""
         return self._resp
 
-    def delete(self, _path: str) -> DummyResp:
+    def delete(self, _path: str, **_kwargs: object) -> DummyResp:
         """Return the configured response for DELETE requests."""
         return self._resp
 
@@ -55,17 +55,17 @@ class ErroringHTTP:
     def __init__(self) -> None:
         """Initialize."""
 
-    def post(self, _path: str, _json: dict[str, object] | None = None) -> DummyResp:
+    def post(self, _path: str, **_kwargs: object) -> DummyResp:
         """Raise HTTPError for POST requests."""
         msg = "boom"
         raise httpx.HTTPError(msg)
 
-    def get(self, _path: str) -> DummyResp:
+    def get(self, _path: str, **_kwargs: object) -> DummyResp:
         """Raise HTTPError for GET requests."""
         msg = "boom"
         raise httpx.HTTPError(msg)
 
-    def delete(self, _path: str) -> DummyResp:
+    def delete(self, _path: str, **_kwargs: object) -> DummyResp:
         """Raise HTTPError for DELETE requests."""
         msg = "boom"
         raise httpx.HTTPError(msg)
@@ -211,10 +211,15 @@ def test_constructor_uses_asgi_transport_when_testserver(monkeypatch: pytest.Mon
     called = {"count": 0}
 
     class DummyTransport:
-        def __init__(self, _app: object) -> None:
+        """Stub transport that records initialisation."""
+
+        def __init__(self, *_: object, **__: object) -> None:
             called["count"] += 1
 
     monkeypatch.setattr(httpx, "ASGITransport", DummyTransport)
+    import openai_adapter.src.openai_adapter._adapter as adapter_module  # noqa: PLC0415
+
+    monkeypatch.setattr(adapter_module, "_load_test_client", lambda: (None, fake_main.app))
 
     OpenAIServiceAdapter(base_url="http://testserver", session_id="test-session-1")
     assert called["count"] == 1

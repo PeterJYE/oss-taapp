@@ -37,18 +37,13 @@ def get_client_dep() -> mail_client_api.Client:
     os.chdir(project_root)
 
     try:
-        client = mail_client_api.get_client(interactive=True)
-    except Exception as e:
+        return _invoke_mail_client_factory()
+    except Exception:
         logger.exception("Failed to initialize mail client via factory")
-        os.chdir(original_cwd)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to initialize mail client",
-        ) from e
+        raise
     finally:
         os.chdir(original_cwd)
 
-    return client
 
 
 class MessageSummary(BaseModel):
@@ -91,12 +86,8 @@ def list_messages(
     summaries: list[MessageSummary] = []
     try:
         for msg in messages_iter:
-            item: MessageSummary = {
-                "id": msg.id,
-            }
-            if msg.subject:
-                item["subject"] = msg.subject
-            summaries.append(item)
+            summary = MessageSummary(id=msg.id, subject=msg.subject or None)
+            summaries.append(summary)
     except Exception as e:
         logger.exception("Error iterating messages")
         raise HTTPException(status_code=500, detail="Error processing messages") from e
@@ -179,3 +170,22 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run("mail_client_service.main:app", host="127.0.0.1", port=8000, reload=True)
+
+
+def _invoke_mail_client_factory() -> mail_client_api.Client:
+    """Call mail_client_api.get_client while tolerating different signatures."""
+    attempts: tuple[tuple[tuple[object, ...], dict[str, object]], ...] = (
+        ((), {"interactive": True}),
+        ((True,), {}),
+        ((), {}),
+    )
+    last_exc: TypeError | None = None
+    for args, kwargs in attempts:
+        try:
+            return mail_client_api.get_client(*args, **kwargs)
+        except TypeError as exc:
+            last_exc = exc
+            continue
+    if last_exc is not None:
+        raise last_exc
+    return mail_client_api.get_client()

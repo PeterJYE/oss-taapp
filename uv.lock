@@ -12,6 +12,8 @@ members = [
     "gmail-client-impl",
     "mail-client-api",
     "mail-client-service",
+    "mail-client-service-client",
+    "openai-adapter",
     "openai-client-impl",
     "openai-client-service",
     "openai-client-service-api-client",
@@ -891,6 +893,23 @@ requires-dist = [
 provides-extras = ["dev"]
 
 [[package]]
+name = "mail-client-service-client"
+version = "1.0.1"
+source = { editable = "src/generated_client" }
+dependencies = [
+    { name = "attrs" },
+    { name = "httpx" },
+    { name = "python-dateutil" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "attrs", specifier = ">=22.2.0" },
+    { name = "httpx", specifier = ">=0.23.0,<0.29.0" },
+    { name = "python-dateutil", specifier = ">=2.8.0" },
+]
+
+[[package]]
 name = "markdown"
 version = "3.9"
 source = { registry = "https://pypi.org/simple" }
@@ -1192,6 +1211,26 @@ sdist = { url = "https://files.pythonhosted.org/packages/c4/44/303deb97be7c1c9b5
 wheels = [
     { url = "https://files.pythonhosted.org/packages/15/0e/331df43df633e6105ff9cf45e0ce57762bd126a45ac16b25a43f6738d8a2/openai-2.6.1-py3-none-any.whl", hash = "sha256:904e4b5254a8416746a2f05649594fa41b19d799843cd134dac86167e094edef", size = 1005551 },
 ]
+
+[[package]]
+name = "openai-adapter"
+version = "0.1.0"
+source = { editable = "src/openai_adapter" }
+dependencies = [
+    { name = "httpx" },
+]
+
+[package.optional-dependencies]
+test = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx", specifier = ">=0.27.0" },
+    { name = "pytest", marker = "extra == 'test'", specifier = ">=8.4.1" },
+]
+provides-extras = ["test"]
 
 [[package]]
 name = "openai-client-impl"

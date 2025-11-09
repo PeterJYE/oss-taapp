@@ -6,14 +6,11 @@ from datetime import UTC, datetime
 
 from openai import OpenAI
 
-from openai_client_impl.errors import MissingOpenAIKeyError
-from openai_client_impl.response import Conversation, Response, get_conversation, get_response
-from openai_client_impl.storage import (
-    delete_conversation,
-    get_conversation_data,
-    get_openai_key,
-    save_conversation,
-)
+from .errors import MissingOpenAIKeyError
+from .response import Conversation, Response, get_conversation, get_response
+from .storage import delete_conversation, get_conversation_data, get_openai_key, save_conversation
+
+__all__ = ["AIClientImpl", "MissingOpenAIKeyError"]
 
 DEFAULT_MODEL = "gpt-4o-mini"
 
@@ -185,7 +182,7 @@ class AIClientImpl:
             ValueError: If conversation_id is invalid or not found.
 
         """
-        deleted = delete_conversation(conversation_id)
+        deleted = bool(delete_conversation(conversation_id))
         if not deleted:
             error_msg = f"Conversation not found: {conversation_id}"
             raise ValueError(error_msg)

@@ -1,6 +1,6 @@
 """FastAPI dependencies for OpenAI Client Service."""
 
-from typing import Annotated
+from typing import Annotated, cast
 
 from fastapi import Cookie, Depends, Header, HTTPException, status
 from openai_service_api.client import AIClient
@@ -74,4 +74,14 @@ def get_ai_client(subject: Annotated[str, Depends(get_authenticated_subject)]) -
         HTTPException: If user is not authenticated
 
     """
-    return AIClientImpl(subject=subject)  # type: ignore[return-value]
+    return cast("AIClient", AIClientImpl(subject=subject))
+
+
+def create_session_for_testing(session_id: str, subject: str) -> None:
+    """Create an authenticated session for tests."""
+    _create_session(session_id, subject)
+
+
+def destroy_session_for_testing(session_id: str) -> None:
+    """Remove an authenticated session for tests."""
+    _destroy_session(session_id)

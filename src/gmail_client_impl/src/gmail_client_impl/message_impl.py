@@ -5,12 +5,18 @@ import email
 import email.header
 import email.utils
 from email.message import Message as EmailMessage
+from typing import TYPE_CHECKING
 
 import mail_client_api
-from mail_client_api import message
+from mail_client_api import message as message_module
+
+if TYPE_CHECKING:
+    from mail_client_api.message import Message as MessageProtocol
+else:  # pragma: no cover - typing hint fallback
+    from mail_client_api import Message as MessageProtocol
 
 
-class GmailMessage(message.Message):
+class GmailMessage(MessageProtocol):
     """Concrete implementation of the Message abstraction for Gmail messages."""
 
     MAX_PRINTABLE_ASCII = 126
@@ -198,9 +204,14 @@ class GmailMessage(message.Message):
         return body_content
 
 
-def get_message_impl(msg_id: str, raw_data: str) -> message.Message:
+def get_message_impl(msg_id: str, raw_data: str) -> MessageProtocol:
     """Return an instance of the concrete GmailMessage implementation."""
     return GmailMessage(msg_id=msg_id, raw_data=raw_data)
+
+
+def get_message(msg_id: str, raw_data: str) -> MessageProtocol:
+    """Backward-compatible alias for the Gmail message factory."""
+    return get_message_impl(msg_id=msg_id, raw_data=raw_data)
 
 
 def register() -> None:
@@ -212,11 +223,11 @@ def register() -> None:
     import importlib
 
     try:
-        m = importlib.import_module("mail_client_api.message")
-        setattr(m, "get_message", get_message_impl)
+        module = importlib.import_module("mail_client_api.message")
+        setattr(module, "get_message", get_message_impl)
     except Exception:
         # Fallback: update the module object this file imported earlier
-        message.get_message = get_message_impl
+        message_module.get_message = get_message_impl  # type: ignore[attr-defined]
 
     # Also set the top-level factory function on the abstract package
     mail_client_api.get_message = get_message_impl

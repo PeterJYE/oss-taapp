@@ -207,6 +207,8 @@ if __name__ == "__main__":
 @pytest.mark.local_credentials
 def test_main_script_handles_no_credentials_gracefully(tmp_path: Path) -> None:
     """Ensure the Gmail client raises a helpful error when no credentials are provided."""
+    gmail_client_impl.register()
+
     patched_env = {
         "GMAIL_CLIENT_ID": "",
         "GMAIL_CLIENT_SECRET": "",

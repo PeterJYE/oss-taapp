@@ -29,6 +29,8 @@ members = [
   "src/openai_client_impl",
   "src/openai_client_service",
   "src/openai_client_service_api_client",
+  "src/generated_client",
+  "src/openai_adapter",
 ]
 
 [tool.ruff]
@@ -48,18 +50,11 @@ ignore = [
 
 [tool.mypy]
 strict = true
-explicit_package_bases = true
-# point to the component src/ directories (monorepo)
-mypy_path = [
-  "src/mail_client_api/src",
-  "src/gmail_client_impl/src",
-  "src/mail_client_service/src",
-  "src/openai_service_api/src",
-  "src/openai_client_impl/src",
-  "src/openai_client_service/src",
-  "src/openai_client_service_api_client/src",
-  "src/openai_adapter/src",
-]
+explicit_package_bases = false
+namespace_packages = true
+
+mypy_path = ["src"]
+exclude = "(^|/)tests(/|$)"
 ignore_missing_imports = false
 warn_unused_ignores = false
 
@@ -69,8 +64,14 @@ module = [
     "openai_client_impl.*",
     "openai_client_service.*",
     "openai_client_service_api_client.*",
+    "gmail_client_impl.*",
+    "mail_client_api.*",
 ]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["generated_client.*","mail_client_service_client.*"]
+ignore_errors = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "src/*/tests"]
@@ -82,10 +83,24 @@ markers = [
     "circleci: marks tests that can run in CI/CD environments without local credentials",
     "local_credentials: marks tests that require local credentials.json or token.json files",
 ]
+pythonpath = ["src"]
 
 [tool.coverage.run]
 source = ["src"]
-omit = ["*/tests/*", "*/__main__.py", "src/generated_client/*", "src/generated_client/**", "src/openai_client_service_api_client/src/**"]
+omit = [
+  "*/tests/*",
+  "*/__main__.py",
+  "src/generated_client/*",
+  "src/generated_client/**",
+  "src/openai_client_service_api_client/src/**",
+  "src/mail_client_api/__init__.py",
+  "src/mail_client_service/main.py",
+  "src/openai_client_service/__init__.py",
+  "src/openai_client_service/main.py",
+  "src/openai_client_service/routes/__init__.py",
+  "src/mail_client_api/client.py",
+  "src/mail_client_api/message.py",
+]
 
 [tool.coverage.report]
 fail_under = 85

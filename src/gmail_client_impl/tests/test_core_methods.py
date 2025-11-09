@@ -43,7 +43,7 @@ class TestGmailClientCoreMethods:
 
         mock_message = Mock()
         with patch(
-            "gmail_client_impl.gmail_impl.message.get_message",
+            "gmail_client_impl.gmail_impl.message_module.get_message",
             return_value=mock_message,
         ) as mock_factory:
             result = self.client.get_message(message_id)
@@ -198,7 +198,7 @@ class TestGmailClientCoreMethods:
         mock_message_3 = Mock()
 
         with patch(
-            "gmail_client_impl.gmail_impl.message.get_message",
+            "gmail_client_impl.gmail_impl.message_module.get_message",
             side_effect=[
                 mock_message_1,
                 mock_message_2,
@@ -296,7 +296,7 @@ class TestGmailClientCoreMethods:
         mock_message_3 = Mock()
 
         with patch(
-            "gmail_client_impl.gmail_impl.message.get_message",
+            "gmail_client_impl.gmail_impl.message_module.get_message",
             side_effect=[
                 mock_message_1,
                 mock_message_3,
@@ -334,7 +334,7 @@ class TestGmailClientCoreMethods:
         mock_message_1 = Mock()
 
         with patch(
-            "gmail_client_impl.gmail_impl.message.get_message",
+            "gmail_client_impl.gmail_impl.message_module.get_message",
             return_value=mock_message_1,
         ) as mock_factory:
             messages = list(self.client.get_messages())

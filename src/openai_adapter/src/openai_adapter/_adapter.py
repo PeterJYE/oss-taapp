@@ -13,12 +13,26 @@ Endpoints:
 
 from __future__ import annotations
 
+from importlib import import_module
+from typing import Any
 from urllib.parse import urlparse
 
 import httpx
 
 HTTP_OK = 200
 HTTP_BAD = 400
+
+
+def _load_test_client() -> tuple[Any | None, Any | None]:
+    """Attempt to import FastAPI's TestClient and the service app lazily."""
+    try:
+        testclient_mod = import_module("fastapi.testclient")
+        service_mod = import_module("openai_client_service.main")
+    except ImportError:
+        return None, None
+    test_client_cls = getattr(testclient_mod, "TestClient", None)
+    app = getattr(service_mod, "app", None)
+    return test_client_cls, app
 
 
 class AdapterError(Exception):
@@ -65,15 +79,18 @@ class OpenAIServiceAdapter:
         self._timeout = timeout
         self._cookies: dict[str, str] = {"session_id": session_id}
 
-        transport: httpx.BaseTransport | None = None
+        self._http: Any
         host = (urlparse(base_url).hostname or "").lower()
-        if host == "testserver":
-            try:
-                from openai_client_service.main import app  # noqa: PLC0415
+        test_client_cls, service_app = _load_test_client()
+        if host == "testserver" and test_client_cls is not None and service_app is not None:
+            test_client = test_client_cls(service_app, base_url=base_url)
+            test_client.cookies.update(self._cookies)
+            self._http = test_client
+            return
 
-                transport = httpx.ASGITransport(app=app)  # type: ignore[arg-type,assignment]
-            except ImportError:
-                transport = None
+        transport: httpx.BaseTransport | None = None
+        if host == "testserver" and service_app is not None:
+            transport = httpx.ASGITransport(app=service_app)  # type: ignore[arg-type,assignment]
 
         self._http = httpx.Client(base_url=base_url, cookies=self._cookies, timeout=timeout, transport=transport)
 
@@ -151,3 +168,4 @@ class OpenAIServiceAdapter:
             if status_str == "ok":
                 return True
         return False
+

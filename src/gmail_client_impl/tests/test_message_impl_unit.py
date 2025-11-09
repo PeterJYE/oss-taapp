@@ -51,6 +51,7 @@ def test_get_message_impl_returns_gmail_message():
 def test_register_overrides_message_getter(monkeypatch):
     """Ensure register() patches mail_client_api.message.get_message."""
     import importlib
+
     import mail_client_api
 
     importlib.reload(mail_client_api.message)

@@ -13,7 +13,7 @@ from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 
 from openai_client_impl import set_openai_key  # type: ignore[attr-defined]
-from openai_client_service.dependencies import (
+from openai_client_service.src.openai_client_service.dependencies import (
     _create_session,
     _destroy_session,
     get_authenticated_subject,
