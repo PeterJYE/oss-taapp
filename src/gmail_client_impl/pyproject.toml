@@ -51,7 +51,12 @@ fail_under = 85
 show_missing = true
 skip_covered = true
 
-# Linting (inherits repository defaults if you have them)
+[tool.hatch.build.targets.wheel]
+packages = ["src/gmail_client_impl"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/gmail_client_impl/py.typed" = "gmail_client_impl/py.typed"
+
 [tool.ruff]
 line-length = 100
 target-version = "py39"
