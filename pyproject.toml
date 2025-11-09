@@ -53,6 +53,18 @@ strict = true
 explicit_package_bases = true # Required for src layout
 namespace_packages = true
 mypy_path = ["src"]
+mypy_path = [
+    "src/mail_client_api/src",
+    "src/gmail_client_impl/src",
+    "src/mail_client_service/src",
+    "src/adapter",
+    "src/generated_client",       
+    "src/openai_service_api/src",
+    "src/openai_client_impl/src",
+    "src/openai_client_service/src",
+    "src/openai_client_service_api_client/src",
+    "src/openai_adapter/src",
+]
 exclude = "(^|/)tests(/|$)"
 ignore_missing_imports = false
 warn_unused_ignores = false
