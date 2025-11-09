@@ -73,8 +73,8 @@ class ActionResult(BaseModel):
 
 @app.get("/messages", response_model=list[MessageSummary])
 def list_messages(
+    client: Annotated[mail_client_api.Client, Depends(get_client_dep)],
     limit: Annotated[int, Query(ge=1, le=100, description="Maximum number of messages to fetch")] = 10,
-    client: Annotated[mail_client_api.Client, Depends(get_client_dep)] = None,
 ) -> list[MessageSummary]:
     """Fetch a list of message summaries. Uses client.get_messages() and returns id + subject."""
     try:
@@ -98,7 +98,7 @@ def list_messages(
 @app.get("/messages/{message_id}", response_model=MessageDetail)
 def get_message_detail(
     message_id: str,
-    client: Annotated[mail_client_api.Client, Depends(get_client_dep)] = None,
+    client: Annotated[mail_client_api.Client, Depends(get_client_dep)],
 ) -> MessageDetail:
     """Fetch the full detail of a single message via client.get_message().
 
@@ -126,7 +126,7 @@ def get_message_detail(
 @app.post("/messages/{message_id}/mark-as-read", response_model=ActionResult, status_code=status.HTTP_200_OK)
 def mark_message_as_read(
     message_id: str,
-    client: Annotated[mail_client_api.Client, Depends(get_client_dep)] = None,
+    client: Annotated[mail_client_api.Client, Depends(get_client_dep)],
 ) -> ActionResult:
     """Mark a message as read via client.mark_as_read()."""
     try:
@@ -146,7 +146,7 @@ def mark_message_as_read(
 @app.delete("/messages/{message_id}", response_model=ActionResult, status_code=status.HTTP_200_OK)
 def delete_message(
     message_id: str,
-    client: Annotated[mail_client_api.Client, Depends(get_client_dep)] = None,
+    client: Annotated[mail_client_api.Client, Depends(get_client_dep)],
 ) -> ActionResult:
     """Permanently delete a message via client.delete_message().
 
@@ -174,9 +174,8 @@ if __name__ == "__main__":
 
 def _invoke_mail_client_factory() -> mail_client_api.Client:
     """Call mail_client_api.get_client while tolerating different signatures."""
-    attempts: tuple[tuple[tuple[object, ...], dict[str, object]], ...] = (
+    attempts: tuple[tuple[tuple[object, ...], dict[str, bool]], ...] = (
         ((), {"interactive": True}),
-        ((True,), {}),
         ((), {}),
     )
     last_exc: TypeError | None = None

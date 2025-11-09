@@ -13,7 +13,7 @@ import logging
 import os
 from collections.abc import Iterator
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, Optional, cast
+from typing import TYPE_CHECKING, ClassVar, Optional
 
 import mail_client_api
 from google.auth.exceptions import GoogleAuthError, RefreshError
@@ -242,12 +242,9 @@ class GmailClient(ClientProtocol):
             msg = f"No raw content found for message {message_id}"
             raise ValueError(msg)
 
-        return cast(
-            MessageProtocol,
-            message_module.get_message(
-                msg_id=message_id,
-                raw_data=raw_content,
-            ),
+        return message_module.get_message(
+            msg_id=message_id,
+            raw_data=raw_content,
         )
 
     def delete_message(self, message_id: str) -> bool:
@@ -341,12 +338,9 @@ class GmailClient(ClientProtocol):
             )
             raw_content = msg_data.get("raw")
             if raw_content:
-                yield cast(
-                    MessageProtocol,
-                    message_module.get_message(
-                        msg_id=msg_summary["id"],
-                        raw_data=raw_content,
-                    ),
+                yield message_module.get_message(
+                    msg_id=msg_summary["id"],
+                    raw_data=raw_content,
                 )
 
 

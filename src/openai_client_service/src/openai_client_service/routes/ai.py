@@ -3,11 +3,12 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
+from openai_service_api.client import AIClient
 from pydantic import BaseModel
 
 from openai_client_impl import MissingOpenAIKeyError  # type: ignore[attr-defined]
-from openai_client_service.src.openai_client_service.dependencies import get_ai_client
-from openai_service_api.src.openai_service_api.client import AIClient
+
+from .dependencies import get_ai_client
 
 router = APIRouter()
 
