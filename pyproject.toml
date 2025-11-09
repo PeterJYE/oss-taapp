@@ -52,7 +52,6 @@ ignore = [
 strict = true
 explicit_package_bases = true # Required for src layout
 namespace_packages = true
-mypy_path = ["src"]
 mypy_path = [
     "src/mail_client_api/src",
     "src/gmail_client_impl/src",
