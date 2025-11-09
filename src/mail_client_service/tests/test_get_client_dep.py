@@ -1,27 +1,37 @@
+"""Tests for mail client service dependency injection."""
+
+from __future__ import annotations
+
 import pytest
+
+from mail_client_service.main import get_client_dep
+
+
+def _require_mail_client_api() -> object:
+    """Import the optional `mail_client_api` package or skip tests."""
+    return pytest.importorskip("mail_client_api")
 
 
 @pytest.mark.unit
-def test_get_client_dep_success(monkeypatch, tmp_path):
-    pytest.importorskip("mail_client_api")
-    from mail_client_service.main import get_client_dep
+def test_get_client_dep_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    """`get_client_dep` should return a client instance when available."""
+    mail_client_module = _require_mail_client_api()
+    monkeypatch.setattr(mail_client_module, "get_client", lambda _interactive=True: object())
 
-    # Monkeypatch mail_client_api.get_client to return a sentinel object
-    import mail_client_api
-    monkeypatch.setattr(mail_client_api, "get_client", lambda interactive=True: object())
-
-    # Ensure function returns without raising
     client = get_client_dep()
     assert client is not None
 
 
 @pytest.mark.unit
-def test_get_client_dep_failure(monkeypatch):
-    pytest.importorskip("mail_client_api")
-    from mail_client_service.main import get_client_dep
+def test_get_client_dep_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    """`get_client_dep` should propagate errors from the API client factory."""
+    mail_client_module = _require_mail_client_api()
+    runtime_error = RuntimeError("oops")
 
-    import mail_client_api
-    monkeypatch.setattr(mail_client_api, "get_client", lambda interactive=True: (_ for _ in ()).throw(RuntimeError("oops")))
+    def _raise_client(*_args: object, **_kwargs: object) -> object:
+        raise runtime_error
 
-    with pytest.raises(Exception):
-        _ = get_client_dep()
+    monkeypatch.setattr(mail_client_module, "get_client", _raise_client)
+
+    with pytest.raises(RuntimeError, match="oops"):
+        get_client_dep()

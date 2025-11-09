@@ -1,4 +1,4 @@
-from generated_client.models import MessageSummary, MessageDetail
+from generated_client.models import MessageDetail, MessageSummary
 
 
 def test_message_summary_roundtrip():

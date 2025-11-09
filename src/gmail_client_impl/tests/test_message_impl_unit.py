@@ -1,10 +1,8 @@
 import base64
 import email
-import types
-import pytest
 
 from gmail_client_impl.message_impl import GmailMessage, get_message_impl, register
-from mail_client_api import message as message_module
+
 
 def make_email_bytes():
     msg = email.message.EmailMessage()
@@ -15,8 +13,6 @@ def make_email_bytes():
     msg.set_content("Hello Gmail!")
     return msg.as_bytes()
 
-
-# ------------------ TESTS -----------------------
 
 def test_valid_message_decoding():
     """Ensure GmailMessage correctly decodes base64-encoded raw data."""
@@ -54,8 +50,8 @@ def test_get_message_impl_returns_gmail_message():
 
 def test_register_overrides_message_getter(monkeypatch):
     """Ensure register() patches mail_client_api.message.get_message."""
-    # Create dummy placeholder to verify patching
     import importlib
+
     import mail_client_api
 
     importlib.reload(mail_client_api.message)
@@ -63,4 +59,9 @@ def test_register_overrides_message_getter(monkeypatch):
 
     register()
     assert mail_client_api.message.get_message != original
-    assert isinstance(mail_client_api.message.get_message("1", base64.urlsafe_b64encode(make_email_bytes()).decode()), GmailMessage)
+    assert isinstance(
+        mail_client_api.message.get_message(
+            "1", base64.urlsafe_b64encode(make_email_bytes()).decode()
+        ),
+        GmailMessage,
+    )

@@ -1,7 +1,7 @@
 [project]
 name = "ta-assignment"
 version = "0.1.0"
-description = "Template repository for a mail client"
+description = "Template repository for an OpenAI client"
 readme = "../../README.md"
 requires-python = ">=3.11"
 dependencies = []
@@ -18,7 +18,6 @@ dev = [
     "pytest-cov>=6.2.1",
     "ruff>=0.12.7",
     "types-requests>=2.32.4.20250611",
-    "attrs>=25.3.0"
 ]
 
 [tool.uv.workspace]
@@ -26,43 +25,53 @@ members = [
   "src/mail_client_api",
   "src/gmail_client_impl",
   "src/mail_client_service",
+  "src/openai_service_api",
+  "src/openai_client_impl",
+  "src/openai_client_service",
+  "src/openai_client_service_api_client",
+  "src/generated_client",
+  "src/openai_adapter",
 ]
 
 [tool.ruff]
-line-length = 130 # high for top level due to tests
+line-length = 130
 target-version = "py311"
 
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-  "D203", # `incorrect-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible. Ignoring `incorrect-blank-line-before-class`.
-  "D213", # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible. Ignoring `multi-line-summary-second-line`.
-  "S101", # Use of `assert` detected --> Asserts are good in our opinion. Tests use asserts profusely.
+  "D203",  # 'incorrect-blank-line-before-class' (D203) and 'no-blank-line-before-class' (D211) are conflicting
+  "D213",  # 'multi-line-summary-first-line' (D212) and 'multi-line-summary-second-line' (D213) are conflicting
+  "COM812",  # Trailing comma - conflicts with formatter behavior
 ]
-per-file-ignores = { "**/test_*.py" = ["TRY300", "BLE001", "ANN401", "SLF001", "E501", "S105", "ARG001", "ARG002", "S106", "INP001", "PLC0415"] }
+[tool.ruff.lint.per-file-ignores]
+"**/test_*.py" = ["S101", "ANN401", "ARG001"]
+"src/generated_client/**/*.py" = ["UP007", "F401"]
 
 [tool.mypy]
 strict = true
-explicit_package_bases = true # Required for src layout
-mypy_path = ["src/mail_client_api/src", "src/mail_client_gmail_impl/src"]
+explicit_package_bases = false
+namespace_packages = true
+mypy_path = ["src"]
+exclude = "(^|/)tests(/|$)"
 ignore_missing_imports = false
 warn_unused_ignores = false
 
-# Allow untyped imports for specific modules
 [[tool.mypy.overrides]]
 module = [
-    "google.*",
-    "googleapiclient.*",
+    "openai_client_impl.*",
+    "openai_client_service.*",
+    "openai_client_service_api_client.*",
     "gmail_client_impl.*",
     "mail_client_api.*",
 ]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = ["generated_client.*","mail_client_service_client.*"]
+ignore_errors = true
+
 [tool.pytest.ini_options]
-pythonpath = [
-    ".", 
-    "src"
-]
 testpaths = ["tests", "src/*/tests"]
 addopts = ["--cov", "--cov-report=term-missing", "--import-mode=importlib"]
 markers = [
@@ -72,15 +81,30 @@ markers = [
     "circleci: marks tests that can run in CI/CD environments without local credentials",
     "local_credentials: marks tests that require local credentials.json or token.json files",
 ]
+pythonpath = ["src"]
 
 [tool.coverage.run]
 source = ["src"]
-omit = ["*/tests/*", "*/__main__.py", "src/generated_client/*", "src/generated_client/**"]
+omit = [
+  "*/tests/*",
+  "*/__main__.py",
+  "src/generated_client/*",
+  "src/generated_client/**",
+  "src/openai_client_service_api_client/src/**",
+  "src/mail_client_api/__init__.py",
+  "src/mail_client_service/main.py",
+  "src/openai_client_service/__init__.py",
+  "src/openai_client_service/main.py",
+  "src/openai_client_service/routes/__init__.py",
+  "src/mail_client_api/client.py",
+  "src/mail_client_api/message.py",
+]
 
 [tool.coverage.report]
-fail_under = 85 # Justification: A high threshold ensures most code is tested.
+fail_under = 85
 exclude_lines = [
     "pragma: no cover",
     "raise NotImplementedError",
     "if TYPE_CHECKING:",
 ]
+

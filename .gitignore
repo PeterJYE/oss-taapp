@@ -31,8 +31,12 @@ site/
 token.json
 .env
 credentials.json
+.fernet_key
 
 .coverage*
 TESTING_STATUS.md
 
 .DS_Store
+
+
+.data

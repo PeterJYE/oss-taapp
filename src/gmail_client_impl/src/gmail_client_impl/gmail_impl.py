@@ -13,10 +13,8 @@ import logging
 import os
 from collections.abc import Iterator
 from pathlib import Path
-from typing import ClassVar
-from typing import Optional
+from typing import TYPE_CHECKING, ClassVar, Optional, cast
 
-from mail_client_api import message
 import mail_client_api
 from google.auth.exceptions import GoogleAuthError, RefreshError
 from google.auth.transport.requests import Request
@@ -24,7 +22,14 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow  # type: ignore[import-untyped]
 from googleapiclient.discovery import Resource, build
 from googleapiclient.errors import HttpError
-#from mail_client_api import message
+from mail_client_api import message as message_module
+
+if TYPE_CHECKING:
+    from mail_client_api.client import Client as ClientProtocol
+    from mail_client_api.message import Message as MessageProtocol
+else:  # pragma: no cover - typing hint fallback
+    from mail_client_api import Client as ClientProtocol
+    from mail_client_api import Message as MessageProtocol
 
 # Try to load .env file if python-dotenv is available
 try:
@@ -44,7 +49,7 @@ except ImportError:
                     os.environ[key.strip()] = value.strip()
 
 
-class GmailClient(mail_client_api.Client):
+class GmailClient(ClientProtocol):
     """Concrete implementation of the Client abstraction using Gmail API.
 
     This class provides a complete implementation of the mail_client_api.Client abstraction
@@ -212,7 +217,7 @@ class GmailClient(mail_client_api.Client):
         with Path(token_path).open("w") as token:
             token.write(creds.to_json())  # type: ignore[no-untyped-call]
 
-    def get_message(self, message_id: str) -> message.Message:
+    def get_message(self, message_id: str) -> MessageProtocol:
         """Retrieve a specific message by its ID.
 
         Args:
@@ -237,9 +242,12 @@ class GmailClient(mail_client_api.Client):
             msg = f"No raw content found for message {message_id}"
             raise ValueError(msg)
 
-        return message.get_message(
-            msg_id=message_id,
-            raw_data=raw_content,
+        return cast(
+            MessageProtocol,
+            message_module.get_message(
+                msg_id=message_id,
+                raw_data=raw_content,
+            ),
         )
 
     def delete_message(self, message_id: str) -> bool:
@@ -298,7 +306,7 @@ class GmailClient(mail_client_api.Client):
         else:
             return True
 
-    def get_messages(self, max_results: int = 10) -> Iterator[message.Message]:
+    def get_messages(self, max_results: int = 10) -> Iterator[MessageProtocol]:
         """Retrieve messages from the Gmail inbox.
 
         This method fetches a list of message summaries from the Gmail API,
@@ -333,15 +341,23 @@ class GmailClient(mail_client_api.Client):
             )
             raw_content = msg_data.get("raw")
             if raw_content:
-                yield message.get_message(
-                    msg_id=msg_summary["id"],
-                    raw_data=raw_content,
+                yield cast(
+                    MessageProtocol,
+                    message_module.get_message(
+                        msg_id=msg_summary["id"],
+                        raw_data=raw_content,
+                    ),
                 )
 
 
-def get_client_impl(*, interactive: bool = False) -> mail_client_api.Client:
+def get_client_impl(*, interactive: bool = False) -> ClientProtocol:
     """Return a configured :class:`GmailClient` instance."""
     return GmailClient(interactive=interactive)
+
+
+def get_client(*, interactive: bool = False) -> ClientProtocol:
+    """Backward-compatible alias for the Gmail client factory."""
+    return get_client_impl(interactive=interactive)
 
 
 def register() -> None:

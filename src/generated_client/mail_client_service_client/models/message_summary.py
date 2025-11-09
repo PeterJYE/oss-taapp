@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from typing import Any, TypeVar, Union, cast
+from typing import Any, TypeVar, cast
 
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
@@ -16,16 +16,17 @@ class MessageSummary:
     Attributes:
         id (str):
         subject (Union[None, Unset, str]):
+
     """
 
     id: str
-    subject: Union[None, Unset, str] = UNSET
+    subject: None | Unset | str = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         id = self.id
 
-        subject: Union[None, Unset, str]
+        subject: None | Unset | str
         if isinstance(self.subject, Unset):
             subject = UNSET
         else:
@@ -48,12 +49,12 @@ class MessageSummary:
         d = dict(src_dict)
         id = d.pop("id")
 
-        def _parse_subject(data: object) -> Union[None, Unset, str]:
+        def _parse_subject(data: object) -> None | Unset | str:
             if data is None:
                 return data
             if isinstance(data, Unset):
                 return data
-            return cast(Union[None, Unset, str], data)
+            return cast(None | Unset | str, data)
 
         subject = _parse_subject(d.pop("subject", UNSET))
 

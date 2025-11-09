@@ -1,239 +1,213 @@
-# Python Application Template: A Component-Based Mail Client
+# OpenAI Client Service
 
-[![CircleCI](https://circleci.com/gh/ivanearisty/oss-taapp.svg?style=shield)](https://circleci.com/gh/ivanearisty/oss-taapp)
-[![Coverage](https://img.shields.io/badge/coverage-85%2B%25-brightgreen)](https://circleci.com/gh/ivanearisty/oss-taapp)
-[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://python.org)
-[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+A FastAPI-based service that provides a secure, multi-user interface to OpenAI's API with conversation management and encrypted API key storage.
 
-This repository serves as a professional-grade template for a modern Python project. It demonstrates a robust, component-based architecture by building the core components for an AI-powered email assistant that interacts with the Gmail API.
+## Architecture
 
-The project emphasizes a strict separation of concerns, dependency injection, and a comprehensive, automated toolchain to enforce code quality and best practices.
+This project implements a clean architecture with the following components:
 
-## Architectural Philosophy
+- **`openai_service_api`**: Abstract interfaces (`AIClient`, `Response`, `Conversation`)
+- **`openai_client_impl`**: Concrete OpenAI implementation with secure storage
+- **`openai_client_service`**: FastAPI service exposing the interface as HTTP endpoints
+- **`openai_client_service_api_client`**: Auto-generated client library
 
-This project is built on the principle of "programming integrated over time." The architecture is designed to combat complexity and ensure the system is maintainable and evolvable.
+## Features
 
--   **Component-Based Design:** The system is broken down into four distinct, self-contained components. Each component has a single responsibility and can be "forklifted" out of this project to be used in another with minimal effort.
--   **Interface-Implementation Separation:** Every piece of functionality is defined by an abstract **contract** implemented as an ABC (the "what") and fulfilled by a concrete **implementation** (the "how"). This decouples our business logic from specific technologies (like Gmail).
--   **Dependency Injection:** Implementations are "injected" into the abstract contracts at runtime. This means consumers of the API only ever depend on the stable interface, not the volatile implementation details.
+- 🔐 **Secure API Key Storage**: Encrypted storage using Fernet encryption
+- 👥 **Multi-User Support**: Per-user API keys and conversation isolation
+- 💬 **Conversation Management**: Create, retrieve, and delete conversations
+- 🤖 **AI Response Generation**: Generate responses using OpenAI's API
+- 🛡️ **OAuth 2.0 Authentication**: Authorization Code flow with session cookies
+- 📚 **Auto-Generated Client**: OpenAPI-based client library generation
 
-## Core Components
+## Quick Start
 
-The project is a `uv` workspace containing four primary packages:
+### Prerequisites
 
-3.  **`mail_client_api`**: Defines the abstract `Client` base class (ABC). This is the contract for what actions a mail client can perform (e.g., `get_messages`).
-4.  **`gmail_client_impl`**: Provides the `GmailClient` class, a concrete implementation that uses the Google API to perform the actions defined in the `Client` abstraction.
+- Python 3.11+
+- [uv](https://docs.astral.sh/uv/) package manager
+- OpenAI API key
 
-## Project Structure
+### Installation
 
-```
-ta-assignment/
-├── src/                          # Source packages (uv workspace members)
-│   ├── mail_client_api/          # Abstract mail client base class (ABC)  
-│   └── gmail_client_impl/        # Gmail-specific client implementation
-├── tests/                        # Integration and E2E tests
-│   ├── integration/              # Component integration tests
-│   └── e2e/                      # End-to-end application tests
-├── docs/                         # Documentation source files
-├── .circleci/                    # CircleCI configuration
-├── main.py                       # Main application entry point
-├── pyproject.toml               # Project configuration (dependencies, tools)
-├── uv.lock                      # Locked dependency versions
-└── credentials.json             # Google OAuth credentials (local only)
-```
-
-## Project Setup
-
-### 1. Prerequisites
-
--   Python 3.11 or higher
--   `uv` – A fast, all-in-one Python package manager.
-
-### 2. Initial Setup
-
-1.  **Install `uv`:**
-    ```bash
-    # macOS / Linux
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    # Windows (PowerShell)
-    irm https://astral.sh/uv/install.ps1 | iex
-    ```
-
-2.  **Clone the Repository:**
-    ```bash
-    git clone <your-repository-url>
-    cd ta-assignment
-    ```
-
-3.  **Set Up Google Credentials:**
-    -   Follow the [Google Cloud instructions](https://developers.google.com/gmail/api/quickstart/python#authorize_credentials_for_a_desktop_application) to enable the Gmail API and download your OAuth 2.0 credentials.
-    -   Rename the downloaded file to `credentials.json` and place it in the root of this project.
-    -   **Alternative**: For CI/CD environments, you can use environment variables instead:
-        ```bash
-        export GMAIL_CLIENT_ID="your_client_id"
-        export GMAIL_CLIENT_SECRET="your_client_secret"
-        export GMAIL_REFRESH_TOKEN="your_refresh_token"
-        ```
-    -   **Important:** Credential files contain secrets and are ignored by `.gitignore`.
-
-4.  **Create and Sync the Virtual Environment:**
-    This single command creates a `.venv` folder and installs all packages (including workspace members and development tools) defined in `uv.lock`.
-    ```bash
-    uv sync --all-packages --extra dev
-    ```
-
-5.  **Activate the Virtual Environment:**
-    ```bash
-    # macOS / Linux
-    source .venv/bin/activate
-    # Windows (PowerShell)
-    .venv\Scripts\Activate.ps1
-    ```
-
-6.  **Perform Initial Authentication:**
-    Run the main application once to perform the interactive OAuth flow. This will open a browser window for you to grant permission.
-    ```bash
-    uv run python main.py
-    ```
-    After you approve, a `token.json` file will be created. This file is also ignored by `.gitignore` and will be used for authentication in subsequent runs.
-
-## Development Workflow
-
-All commands should be run from the project root with the virtual environment activated.
-
-### Running the Application
-
-To run the main demonstration script:
+1. Clone the repository:
 ```bash
-uv run python main.py
+git clone https://github.com/PeterJYE/oss-taapp.git
+cd oss-taapp
 ```
 
-### Running the Toolchain
-
--   **Linting & Formatting (Ruff):**
-    The project uses Ruff with comprehensive rules configured in `pyproject.toml`.
-    ```bash
-    # Check for issues
-    uv run ruff check .
-    # Automatically fix issues
-    uv run ruff check . --fix
-    # Check formatting
-    uv run ruff format --check .
-    # Apply formatting
-    uv run ruff format .
-    ```
-
--   **Static Type Checking (MyPy):**
-    ```bash
-    uv run mypy src tests
-    ```
-
--   **Testing (Pytest):**
-
-    I'd recommend only running: `uv run pytest src/ tests/ -m "not local_credentials" -v` for simplicity.
-
-    The project uses a comprehensive testing strategy with different test categories.
-    ```bash
-    # Run all tests (includes unit, integration, and e2e tests)
-    uv run pytest
-
-    # Run only unit tests (fast, no external dependencies - from src/ directories)
-    uv run pytest src/
-
-    # Run all tests except those requiring local credential files
-    uv run pytest src/ tests/ -m "not local_credentials"
-
-    # Run only integration tests (requires environment variables or credentials)
-    uv run pytest -m integration
-
-    # Run only end-to-end tests (requires credentials)
-    uv run pytest -m e2e
-
-    # Run only CircleCI-compatible tests (CI/CD environment)
-    uv run pytest -m circleci
-
-    # Run tests with coverage reporting
-    uv run pytest --cov=src --cov-report=term-missing
-    ```
-
-### Viewing Documentation
-
-This project uses MkDocs for documentation.
+2. Install dependencies:
 ```bash
-# Start the live-reloading documentation server
-uv run mkdocs serve
+uv sync
 ```
-Open your browser to `http://127.0.0.1:8000` to view the site.
 
-## Testing Infrastructure
+The service will be available at ``
 
-The project implements a sophisticated testing strategy designed for both local development and CI/CD environments:
+### Docker
 
-### Test Categories
-
-- **Unit Tests** (`src/*/tests/`): Fast, isolated tests with mocked dependencies
-- **Integration Tests** (`tests/integration/`): Tests that verify component interactions
-- **End-to-End Tests** (`tests/e2e/`): Full application workflow tests
-- **CircleCI Tests**: CI/CD-compatible tests that handle missing credentials gracefully
-- **Local Credentials Tests**: Tests that require `credentials.json` or `token.json` files
-
-### Test Markers
-
-The project uses pytest markers to categorize tests:
 ```bash
-@pytest.mark.unit              # Fast unit tests
-@pytest.mark.integration       # Integration tests
-@pytest.mark.e2e              # End-to-end tests
-@pytest.mark.circleci         # CI/CD compatible
-@pytest.mark.local_credentials # Requires local auth files
+docker build -t openai-client-service .
+docker run -p 8000:8000 openai-client-service
 ```
 
-### Authentication in Tests
+## API Endpoints
 
-The testing infrastructure handles different authentication scenarios:
-- **Local Development**: Uses `credentials.json` and `token.json` files
-- **CI/CD Environment**: Uses environment variables (`GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`)
-- **Missing Credentials**: Tests fail fast with clear error messages (no hanging)
+### Authentication
+- `GET /auth/login` - Start OAuth 2.0 Authorization Code flow
+- `GET /auth/callback` - OAuth 2.0 redirect URI to complete login
+- `POST /auth/logout` - Clear session
+- `POST /auth/set-openai-key` - Store OpenAI API key for a user
 
-## Continuous Integration
+### AI Operations
+- `POST /ai/generate-response` - Generate AI response
+- `POST /ai/conversations` - Create new conversation
+- `GET /ai/conversations/{conversation_id}` - Get conversation
+- `DELETE /ai/conversations/{conversation_id}` - Delete conversation
 
-The project includes a comprehensive CircleCI configuration (`.circleci/config.yml`) with:
+### System
+- `GET /health` - Health check
+- `GET /docs` - Swagger UI documentation
+- `GET /openapi.json` - OpenAPI specification
 
-- **All Branches**: Unit tests, linting, and CI-compatible tests
-- **Main/Develop**: Additional integration tests with real Gmail API calls
-- **Artifacts**: Coverage reports, test results, and build summaries
+## Usage Examples
 
-See `docs/circleci-setup.md` for detailed CI/CD setup instructions.
+### 1. Login via OAuth 2.0
+Open a browser and complete the provider login. A `session_id` cookie will be set on success.
 
-## Development Workflow
-
-### Quick Start
-1. **Install dependencies**: `uv sync --all-packages --extra dev`
-2. **Run tests**: `uv run pytest tests/ -v` or `uv run pytest src/ tests/ -m "not local_credentials" -v`
-3. **Check code quality**: `uv run ruff check . && uv run ruff format --check .`
-4. **Fix formatting**: `uv run ruff format .`
-5. **View documentation**: `uv run mkdocs serve`
-
-### Best Practices
-- Run unit tests (`uv run pytest src/`) during development for fast feedback
-- Use integration tests (`uv run pytest -m integration`) to verify component interactions
-- Run full test suite (`uv run pytest`) before pushing to ensure CI compatibility
-- The CircleCI pipeline provides automated validation on every push
-
-  ## Running the FastAPI Service in Docker
-
-### Build the Image
+### 2. Set API Key
 ```bash
-
-docker build -t mail-client-service:latest .
+curl -X POST http://localhost:8000/auth/set-openai-key \
+  -H "Content-Type: application/json" \
+  --cookie "session_id=YOUR_SESSION_ID" \
+  -d '{"api_key": "sk-your-openai-key"}'
 ```
 
-### Run the Container
+Note: The endpoint requires authentication via session cookie. Users can only set their own API key.
+
+### 3. Create Conversation
 ```bash
-
-
-docker run --rm -it \
-  -p 8000:8000 \
-  -v $(pwd)/credentials.json:/app/src/mail_client_service/credentials.json:ro \
-  mail-client-service:latest
+curl -X POST http://localhost:8000/ai/conversations \
+  --cookie "session_id=YOUR_SESSION_ID"
 ```
+
+### 4. Generate Response
+```bash
+curl -X POST http://localhost:8000/ai/generate-response \
+  -H "Content-Type: application/json" \
+  --cookie "session_id=YOUR_SESSION_ID" \
+  -d '{
+    "messages": ["Hello, how are you?"],
+    "conversation_id": "your-conversation-id"
+  }'
+```
+
+### 5. Get Conversation
+```bash
+curl -X GET http://localhost:8000/ai/conversations/your-conversation-id \
+  --cookie "session_id=YOUR_SESSION_ID"
+```
+
+## Testing
+
+### Run All Tests
+```bash
+uv run pytest
+```
+
+### Run Specific Test Types
+```bash
+# Unit tests
+uv run pytest tests/unit/
+
+# Integration tests
+uv run pytest tests/integration/
+
+# End-to-end tests
+uv run pytest tests/e2e/
+```
+
+### Test Coverage
+```bash
+uv run pytest --cov=src --cov-report=html
+```
+
+## Client Library Generation
+
+The service includes an auto-generated client library:
+
+### Generate Client
+```bash
+# Start the service first, then:
+cd src/openai_client_service_api_client
+uv run python scripts/generate_client.py
+```
+
+### Use Generated Client
+```python
+from openai_client_service_api_client import Client
+
+client = Client(base_url="http://localhost:8000")
+response = client.ai.generate_response(
+    messages=["Hello"],
+    conversation_id="conv-123",
+    headers={"X-Subject": "user123"}
+)
+```
+
+## AI Adapter
+
+The `openai_adapter` package provides a thin, typed adapter for calling the running service from Python applications without pulling in the generated client. It handles base URL, headers, timeouts, and offers a simple API.
+
+### Where it lives
+- Code: `src/openai_adapter/src/openai_adapter/_adapter.py`
+- Tests: `src/openai_adapter/tests/test_adapter.py`
+
+
+
+
+## Development
+
+### Project Structure
+```
+oss-taapp/
+├── src/
+│   ├── openai_adapter/              # Thin typed adapter for the service
+│   ├── openai_service_api/          # Abstract interfaces
+│   ├── openai_client_impl/     # OpenAI implementation
+│   ├── openai_client_service/  # FastAPI service
+│   └── openai_client_service_api_client/  # Generated client
+├── tests/                      # Test suites
+├── docs/                      # Documentation
+├── pyproject.toml            # Root configuration
+└── Dockerfile                # Container configuration
+```
+
+### Code Quality
+```bash
+# Linting
+uv run ruff check .
+
+# Type checking
+uv run mypy .
+
+# Formatting
+uv run ruff format .
+```
+
+### Environment Variables
+- `FERNET_KEY`: Encryption key for API key storage (auto-generated if not set)
+- `OPENAPI_URL`: URL for client generation (defaults to localhost:8000)
+- `OAUTH_CLIENT_ID`: OAuth 2.0 client ID
+- `OAUTH_CLIENT_SECRET`: OAuth 2.0 client secret (optional if using PKCE-only)
+- `OAUTH_AUTH_URL`: Authorization endpoint URL
+- `OAUTH_TOKEN_URL`: Token endpoint URL
+- `OAUTH_USERINFO_URL`: UserInfo endpoint URL (optional, recommended for subject)
+- `OAUTH_REDIRECT_URI`: Redirect URI (e.g., `http://localhost:8000/auth/callback`)
+- `OAUTH_SCOPE`: Space-separated scopes (default: `openid profile email`)
+
+## Security
+
+- API keys are encrypted using Fernet encryption
+- Per-user isolation ensures data privacy
+- No API keys are logged or exposed in responses
+- Database uses encrypted storage for sensitive data

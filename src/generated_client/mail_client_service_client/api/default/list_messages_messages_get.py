@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any
 
 import httpx
 
@@ -12,7 +12,7 @@ from ...types import UNSET, Response, Unset
 
 def _get_kwargs(
     *,
-    limit: Union[Unset, int] = 10,
+    limit: Unset | int = 10,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -30,8 +30,8 @@ def _get_kwargs(
 
 
 def _parse_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[HTTPValidationError, list["MessageSummary"]]]:
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> HTTPValidationError | list["MessageSummary"] | None:
     if response.status_code == 200:
         response_200 = []
         _response_200 = response.json()
@@ -54,8 +54,8 @@ def _parse_response(
 
 
 def _build_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[HTTPValidationError, list["MessageSummary"]]]:
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[HTTPValidationError | list["MessageSummary"]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -66,9 +66,9 @@ def _build_response(
 
 def sync_detailed(
     *,
-    client: Union[AuthenticatedClient, Client],
-    limit: Union[Unset, int] = 10,
-) -> Response[Union[HTTPValidationError, list["MessageSummary"]]]:
+    client: AuthenticatedClient | Client,
+    limit: Unset | int = 10,
+) -> Response[HTTPValidationError | list["MessageSummary"]]:
     """List Messages
 
      Fetch a list of message summaries. Uses client.get_messages() and returns id + subject.
@@ -82,8 +82,8 @@ def sync_detailed(
 
     Returns:
         Response[Union[HTTPValidationError, list['MessageSummary']]]
-    """
 
+    """
     kwargs = _get_kwargs(
         limit=limit,
     )
@@ -97,9 +97,9 @@ def sync_detailed(
 
 def sync(
     *,
-    client: Union[AuthenticatedClient, Client],
-    limit: Union[Unset, int] = 10,
-) -> Optional[Union[HTTPValidationError, list["MessageSummary"]]]:
+    client: AuthenticatedClient | Client,
+    limit: Unset | int = 10,
+) -> HTTPValidationError | list["MessageSummary"] | None:
     """List Messages
 
      Fetch a list of message summaries. Uses client.get_messages() and returns id + subject.
@@ -113,8 +113,8 @@ def sync(
 
     Returns:
         Union[HTTPValidationError, list['MessageSummary']]
-    """
 
+    """
     return sync_detailed(
         client=client,
         limit=limit,
@@ -123,9 +123,9 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: Union[AuthenticatedClient, Client],
-    limit: Union[Unset, int] = 10,
-) -> Response[Union[HTTPValidationError, list["MessageSummary"]]]:
+    client: AuthenticatedClient | Client,
+    limit: Unset | int = 10,
+) -> Response[HTTPValidationError | list["MessageSummary"]]:
     """List Messages
 
      Fetch a list of message summaries. Uses client.get_messages() and returns id + subject.
@@ -139,8 +139,8 @@ async def asyncio_detailed(
 
     Returns:
         Response[Union[HTTPValidationError, list['MessageSummary']]]
-    """
 
+    """
     kwargs = _get_kwargs(
         limit=limit,
     )
@@ -152,9 +152,9 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: Union[AuthenticatedClient, Client],
-    limit: Union[Unset, int] = 10,
-) -> Optional[Union[HTTPValidationError, list["MessageSummary"]]]:
+    client: AuthenticatedClient | Client,
+    limit: Unset | int = 10,
+) -> HTTPValidationError | list["MessageSummary"] | None:
     """List Messages
 
      Fetch a list of message summaries. Uses client.get_messages() and returns id + subject.
@@ -168,8 +168,8 @@ async def asyncio(
 
     Returns:
         Union[HTTPValidationError, list['MessageSummary']]
-    """
 
+    """
     return (
         await asyncio_detailed(
             client=client,

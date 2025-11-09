@@ -1,6 +1,4 @@
-from types import SimpleNamespace
-
-from generated_client.models import MessageSummary, MessageDetail, ActionResult
+from generated_client.models import ActionResult, MessageDetail, MessageSummary
 
 
 class FakeResponse:
@@ -42,9 +40,18 @@ def test_list_messages_api_module():
 
 
 def test_get_message_detail_api_module():
-    from generated_client.mail_client_service_client.api.default import get_message_detail_messages_message_id_get as get_mod
+    from generated_client.mail_client_service_client.api.default import (
+        get_message_detail_messages_message_id_get as get_mod,
+    )
 
-    payload = {"id": "m1", "from_": "a@b.com", "to": "me@me.com", "date": "2025-01-01T00:00:00Z", "subject": "s", "body": "b"}
+    payload = {
+        "id": "m1",
+        "from_": "a@b.com",
+        "to": "me@me.com",
+        "date": "2025-01-01T00:00:00Z",
+        "subject": "s",
+        "body": "b",
+    }
     fake = FakeClient(payload)
     parsed = get_mod.sync(client=fake, message_id="m1")
     assert isinstance(parsed, MessageDetail)
@@ -53,8 +60,10 @@ def test_get_message_detail_api_module():
 
 def test_mark_read_and_delete_modules():
     from generated_client.mail_client_service_client.api.default import (
-        mark_message_as_read_messages_message_id_mark_as_read_post as mark_mod,
         delete_message_messages_message_id_delete as del_mod,
+    )
+    from generated_client.mail_client_service_client.api.default import (
+        mark_message_as_read_messages_message_id_mark_as_read_post as mark_mod,
     )
 
     payload = {"ok": True, "message": "done"}

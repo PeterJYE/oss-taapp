@@ -3,6 +3,7 @@
 This allows tests and other packages to import ``mail_client_api.message`` while
 the actual implementation lives under ``src/mail_client_api/src/mail_client_api``.
 """
-from .src.mail_client_api.message import *  # noqa: F401,F403
+
+from .src.mail_client_api.message import *  # noqa: F403
 
 __all__ = [name for name in dir() if not name.startswith("_")]

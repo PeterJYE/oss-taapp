@@ -12,8 +12,6 @@ def test_generated_client_client_and_api_asgi():
     from fastapi import FastAPI
     from fastapi.responses import JSONResponse
 
-    # Minimal ASGI app that implements the expected endpoints used by the
-    # generated client API modules.
     app = FastAPI()
 
     @app.get("/messages")
@@ -22,14 +20,16 @@ def test_generated_client_client_and_api_asgi():
 
     @app.get("/messages/{message_id}")
     def get_message(message_id: str):
-        return JSONResponse({
-            "id": message_id,
-            "from_": "alice@example.com",
-            "to": "me@example.com",
-            "date": "2025-01-01T00:00:00Z",
-            "subject": "hi",
-            "body": "hello",
-        })
+        return JSONResponse(
+            {
+                "id": message_id,
+                "from_": "alice@example.com",
+                "to": "me@example.com",
+                "date": "2025-01-01T00:00:00Z",
+                "subject": "hi",
+                "body": "hello",
+            }
+        )
 
     @app.delete("/messages/{message_id}")
     def delete_message(message_id: str):
@@ -39,22 +39,22 @@ def test_generated_client_client_and_api_asgi():
     def mark_as_read(message_id: str):
         return JSONResponse({"ok": True, "message": "marked"})
 
-    # Create generated client pointing at the in-process app (httpx will use
-    # an ASGI transport).
-    from generated_client.mail_client_service_client.client import Client
+    import urllib.parse
+
+    from fastapi.testclient import TestClient as FastAPITestClient
+    from generated_client.mail_client_service_client.api.default import (
+        delete_message_messages_message_id_delete as delete_mod,
+    )
+    from generated_client.mail_client_service_client.api.default import (
+        get_message_detail_messages_message_id_get as get_mod,
+    )
     from generated_client.mail_client_service_client.api.default import (
         list_messages_messages_get as list_mod,
-        get_message_detail_messages_message_id_get as get_mod,
-        delete_message_messages_message_id_delete as delete_mod,
+    )
+    from generated_client.mail_client_service_client.api.default import (
         mark_message_as_read_messages_message_id_mark_as_read_post as mark_mod,
     )
-
-    # Instead of relying on httpx transports (which vary between versions),
-    # create a minimal adapter that forwards .request() calls to
-    # fastapi.testclient.TestClient. This keeps the generated-client sync
-    # functions working in-process without network.
-    from fastapi.testclient import TestClient as FastAPITestClient
-    import urllib.parse
+    from generated_client.mail_client_service_client.client import Client
 
     tc = FastAPITestClient(app)
 
@@ -64,10 +64,8 @@ def test_generated_client_client_and_api_asgi():
             self._base = base_url
 
         def request(self, method: str, url: str, params=None, headers=None, json=None, data=None, timeout=None):
-            # Extract path and query since TestClient expects path or full URL
             parsed = urllib.parse.urlparse(url)
             path = parsed.path or "/"
-            # Forward the call to the FastAPI TestClient
             resp = self._tc.request(method, path, params=params, json=json, data=data, headers=headers)
 
             class RespProxy:

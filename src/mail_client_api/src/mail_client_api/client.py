@@ -5,8 +5,6 @@ from collections.abc import Iterator
 
 from .message import Message
 
-__all__ = ["Client", "get_client"]
-
 
 class Client(ABC):
     """Abstract base class representing a mail client for email operations."""

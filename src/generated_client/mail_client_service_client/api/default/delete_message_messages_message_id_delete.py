@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any
 
 import httpx
 
@@ -22,8 +22,8 @@ def _get_kwargs(
 
 
 def _parse_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[ActionResult, HTTPValidationError]]:
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> ActionResult | HTTPValidationError | None:
     if response.status_code == 200:
         response_200 = ActionResult.from_dict(response.json())
 
@@ -41,8 +41,8 @@ def _parse_response(
 
 
 def _build_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[ActionResult, HTTPValidationError]]:
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[ActionResult | HTTPValidationError]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -54,8 +54,8 @@ def _build_response(
 def sync_detailed(
     message_id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
-) -> Response[Union[ActionResult, HTTPValidationError]]:
+    client: AuthenticatedClient | Client,
+) -> Response[ActionResult | HTTPValidationError]:
     """Delete Message
 
      Permanently delete a message via client.delete_message().
@@ -70,8 +70,8 @@ def sync_detailed(
 
     Returns:
         Response[Union[ActionResult, HTTPValidationError]]
-    """
 
+    """
     kwargs = _get_kwargs(
         message_id=message_id,
     )
@@ -86,8 +86,8 @@ def sync_detailed(
 def sync(
     message_id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
-) -> Optional[Union[ActionResult, HTTPValidationError]]:
+    client: AuthenticatedClient | Client,
+) -> ActionResult | HTTPValidationError | None:
     """Delete Message
 
      Permanently delete a message via client.delete_message().
@@ -102,8 +102,8 @@ def sync(
 
     Returns:
         Union[ActionResult, HTTPValidationError]
-    """
 
+    """
     return sync_detailed(
         message_id=message_id,
         client=client,
@@ -113,8 +113,8 @@ def sync(
 async def asyncio_detailed(
     message_id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
-) -> Response[Union[ActionResult, HTTPValidationError]]:
+    client: AuthenticatedClient | Client,
+) -> Response[ActionResult | HTTPValidationError]:
     """Delete Message
 
      Permanently delete a message via client.delete_message().
@@ -129,8 +129,8 @@ async def asyncio_detailed(
 
     Returns:
         Response[Union[ActionResult, HTTPValidationError]]
-    """
 
+    """
     kwargs = _get_kwargs(
         message_id=message_id,
     )
@@ -143,8 +143,8 @@ async def asyncio_detailed(
 async def asyncio(
     message_id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
-) -> Optional[Union[ActionResult, HTTPValidationError]]:
+    client: AuthenticatedClient | Client,
+) -> ActionResult | HTTPValidationError | None:
     """Delete Message
 
      Permanently delete a message via client.delete_message().
@@ -159,8 +159,8 @@ async def asyncio(
 
     Returns:
         Union[ActionResult, HTTPValidationError]
-    """
 
+    """
     return (
         await asyncio_detailed(
             message_id=message_id,

@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Optional, Union
+from typing import Any
 
 import httpx
 
@@ -22,8 +22,8 @@ def _get_kwargs(
 
 
 def _parse_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[HTTPValidationError, MessageDetail]]:
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> HTTPValidationError | MessageDetail | None:
     if response.status_code == 200:
         response_200 = MessageDetail.from_dict(response.json())
 
@@ -41,8 +41,8 @@ def _parse_response(
 
 
 def _build_response(
-    *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[HTTPValidationError, MessageDetail]]:
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> Response[HTTPValidationError | MessageDetail]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -54,8 +54,8 @@ def _build_response(
 def sync_detailed(
     message_id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
-) -> Response[Union[HTTPValidationError, MessageDetail]]:
+    client: AuthenticatedClient | Client,
+) -> Response[HTTPValidationError | MessageDetail]:
     """Get Message Detail
 
      Fetch the full detail of a single message via client.get_message().
@@ -70,8 +70,8 @@ def sync_detailed(
 
     Returns:
         Response[Union[HTTPValidationError, MessageDetail]]
-    """
 
+    """
     kwargs = _get_kwargs(
         message_id=message_id,
     )
@@ -86,8 +86,8 @@ def sync_detailed(
 def sync(
     message_id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
-) -> Optional[Union[HTTPValidationError, MessageDetail]]:
+    client: AuthenticatedClient | Client,
+) -> HTTPValidationError | MessageDetail | None:
     """Get Message Detail
 
      Fetch the full detail of a single message via client.get_message().
@@ -102,8 +102,8 @@ def sync(
 
     Returns:
         Union[HTTPValidationError, MessageDetail]
-    """
 
+    """
     return sync_detailed(
         message_id=message_id,
         client=client,
@@ -113,8 +113,8 @@ def sync(
 async def asyncio_detailed(
     message_id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
-) -> Response[Union[HTTPValidationError, MessageDetail]]:
+    client: AuthenticatedClient | Client,
+) -> Response[HTTPValidationError | MessageDetail]:
     """Get Message Detail
 
      Fetch the full detail of a single message via client.get_message().
@@ -129,8 +129,8 @@ async def asyncio_detailed(
 
     Returns:
         Response[Union[HTTPValidationError, MessageDetail]]
-    """
 
+    """
     kwargs = _get_kwargs(
         message_id=message_id,
     )
@@ -143,8 +143,8 @@ async def asyncio_detailed(
 async def asyncio(
     message_id: str,
     *,
-    client: Union[AuthenticatedClient, Client],
-) -> Optional[Union[HTTPValidationError, MessageDetail]]:
+    client: AuthenticatedClient | Client,
+) -> HTTPValidationError | MessageDetail | None:
     """Get Message Detail
 
      Fetch the full detail of a single message via client.get_message().
@@ -159,8 +159,8 @@ async def asyncio(
 
     Returns:
         Union[HTTPValidationError, MessageDetail]
-    """
 
+    """
     return (
         await asyncio_detailed(
             message_id=message_id,

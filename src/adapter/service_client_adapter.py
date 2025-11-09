@@ -1,193 +1,263 @@
-from collections.abc import Iterator
-from mail_client_api import Client, Message
+"""Adapter that converts the mail client service API into the abstract mail_client_api interface."""
+
+import importlib
+from collections.abc import Callable, Iterator
+from http import HTTPStatus
+from itertools import product
+from typing import TYPE_CHECKING, Any, TypeVar, cast
+from urllib.parse import urlparse
+
 from generated_client.models import MessageDetail, MessageSummary
 from mail_client_api.message import Message as BaseMessage
-import httpx
-from urllib.parse import urlparse
-from typing import Optional
+
+if TYPE_CHECKING:
+    from mail_client_api.client import Client as ClientProtocol
+    from mail_client_api.message import Message as MessageProtocol
+else:  # pragma: no cover - typing hint fallback
+    from mail_client_api import Client as ClientProtocol
+    from mail_client_api import Message as MessageProtocol
+
+HTTP_OK = HTTPStatus.OK
+
+T = TypeVar("T")
+
+_ARG_ALIASES: dict[str, tuple[str, ...]] = {
+    "client": ("client", "_client"),
+    "limit": ("limit", "_limit", "max_results"),
+    "message_id": ("message_id", "_message_id"),
+}
+
+
+def _call_generated(func: Callable[..., T], **params: object) -> T:
+    """Call a generated sync helper, trying alias keyword names for patched stubs."""
+    if not params:
+        return func()
+
+    keys = list(params.keys())
+    alias_options = [_ARG_ALIASES.get(key, (key,)) for key in keys]
+    last_exc: TypeError | None = None
+
+    for aliases in product(*alias_options):
+        payload = {alias: params[key] for key, alias in zip(keys, aliases, strict=False)}
+        try:
+            return func(**payload)
+        except TypeError as exc:
+            last_exc = exc
+            continue
+
+    if last_exc is not None:
+        raise last_exc
+    return func(**params)
+
+
+def _instantiate_generated_client(factory: Callable[..., object], base_url: str) -> object:
+    """Instantiate generated client trying multiple constructor signatures."""
+    attempts: tuple[tuple[tuple[object, ...], dict[str, object]], ...] = (
+        ((), {"base_url": base_url}),
+        ((), {"_base_url": base_url}),
+        ((base_url,), {}),
+        ((), {}),
+    )
+    last_exc: TypeError | None = None
+    for args, kwargs in attempts:
+        try:
+            return factory(*args, **kwargs)
+        except TypeError as exc:
+            last_exc = exc
+            continue
+    if last_exc is not None:
+        raise last_exc
+    return factory()
+
+
+def _default_generated_client(base_url: str) -> object:
+    """Instantiate the raw HTTP client implementation as a fallback."""
+    http_client_factory = importlib.import_module("mail_client_service_client.client").Client
+    return _instantiate_generated_client(http_client_factory, base_url)
 
 
 class ServiceMessage(BaseMessage):
+    """Message implementation that wraps generated client message models."""
 
-    def __init__(self, detail: MessageDetail | MessageSummary):
+    def __init__(self, detail: MessageDetail | MessageSummary) -> None:
+        """Initialize with a message detail or summary from the generated client."""
         self._detail = detail
 
     @property
     def id(self) -> str:
+        """Return the message ID."""
         return self._detail.id
 
     @property
     def from_(self) -> str:
-        return self._detail.from_
+        """Return the sender address."""
+        if isinstance(self._detail, MessageDetail):
+            return self._detail.from_
+        return getattr(self._detail, "from_", "")
 
     @property
     def to(self) -> str:
-        return self._detail.to
+        """Return the recipient address."""
+        if isinstance(self._detail, MessageDetail):
+            return self._detail.to
+        return getattr(self._detail, "to", "")
 
     @property
     def date(self) -> str:
-        return self._detail.date
+        """Return the message date."""
+        if isinstance(self._detail, MessageDetail):
+            return self._detail.date
+        return getattr(self._detail, "date", "")
 
     @property
     def subject(self) -> str:
-        return self._detail.subject
+        """Return the message subject."""
+        return getattr(self._detail, "subject", "")
 
     @property
     def body(self) -> str:
+        """Return the message body, empty string if only summary available."""
         if isinstance(self._detail, MessageDetail):
             return self._detail.body
         return ""
 
 
-class ServiceClientAdapter(Client):
+class ServiceClientAdapter(ClientProtocol):
+    """Adapter that wraps the mail client service HTTP API."""
 
-    def __init__(self, base_url: str):
-        # Import the generated client lazily so unit tests can monkeypatch
-        # sys.modules['generated_client'] with a fake Client class prior to
-        # constructing this adapter.
+    def __init__(self, base_url: str) -> None:
+        """Initialize the adapter with the service base URL."""
         try:
-            from generated_client import Client as AutoGeneratedClient
+            from generated_client import Client as AutoGeneratedClient  # noqa: PLC0415
 
-            self._client = AutoGeneratedClient(base_url=base_url)
-        except Exception:
-            # If the generated client isn't importable, fall back to creating
-            # a dummy object; specific calls will either use TestClient or
-            # raise meaningful errors later.
-            class _Fallback:
-                def __init__(self, base_url: str = ""):
-                    pass
+            try:
+                self._client = _instantiate_generated_client(AutoGeneratedClient, base_url)
+            except TypeError:
+                self._client = _default_generated_client(base_url)
+        except (ImportError, AttributeError):
+            self._client = _default_generated_client(base_url)
 
-            self._client = _Fallback(base_url)
-
-        # If tests pass in a TestClient base_url like 'http://testserver', httpx
-        # will attempt to resolve that host and fail. Detect that case and
-        # create an httpx.Client using ASGITransport against the in-process
-        # FastAPI app so generated-client requests run in-process.
         try:
             parsed = urlparse(str(base_url))
             host = parsed.hostname or ""
-        except Exception:
+        except (ValueError, AttributeError):
             host = ""
 
-        # If tests run with fastapi.TestClient the base_url will point to
-        # 'testserver'. In that case create a TestClient around the app so
-        # requests can be executed in-process without DNS/network access.
-        self._test_client: Optional[object] = None
+        self._test_client: Any | None = None
         if host == "testserver":
             try:
-                from mail_client_service import app as mail_app
-                # Import TestClient lazily
-                from fastapi.testclient import TestClient
+                from fastapi.testclient import TestClient  # noqa: PLC0415
+
+                from mail_client_service import app as mail_app  # noqa: PLC0415
 
                 self._test_client = TestClient(mail_app)
-            except Exception:
+            except (ImportError, AttributeError):
                 self._test_client = None
 
-    def get_messages(self, max_results: int = 10) -> Iterator[Message]:
-        # Lazy import to avoid import-time issues with the generated client package
-        from generated_client.mail_client_service_client.api.default import (
+    def get_messages(self, max_results: int = 10) -> Iterator[MessageProtocol]:
+        """Fetch messages from the service."""
+        from generated_client.mail_client_service_client.api.default import (  # noqa: PLC0415
             list_messages_messages_get as list_messages_mod,
         )
-        # If we have an in-process TestClient prefer calling it directly to
-        # avoid http transport issues in test environments.
+
         if self._test_client is not None:
             res = self._test_client.get("/messages", params={"limit": max_results})
             res.raise_for_status()
-            for item in res.json():
-                # item is a dict matching MessageSummary fields
+            payload = cast("list[dict[str, Any]]", res.json())
+            for item in payload:
                 yield ServiceMessage(MessageSummary(**item))
             return
 
-        # Backwards-compatible path: some tests and older clients provide a
-        # `client.messages` namespace with sync methods. If present, prefer
-        # calling that to allow lightweight monkeypatching in unit tests.
         if hasattr(self._client, "messages"):
-            msgs_api = getattr(self._client, "messages")
+            msgs_api = self._client.messages
             try:
                 resp = msgs_api.list_messages.sync(max_results)
             except TypeError:
-                # Some generated clients expect `limit` instead of `max_results`
                 resp = msgs_api.list_messages.sync(limit=max_results)
 
-            items = getattr(resp, "messages", resp)
-            for item in items:
-                yield ServiceMessage(item)
+            raw_items = getattr(resp, "messages", resp)
+            if isinstance(raw_items, list):
+                for item in raw_items:
+                    yield ServiceMessage(cast("MessageSummary", item))
             return
 
-        resp = list_messages_mod.sync(client=self._client, limit=max_results)
-        # resp is a list[MessageSummary]
-        for msg_summary in resp:
+        resp = _call_generated(list_messages_mod.sync, client=self._client, limit=max_results)
+        for msg_summary in cast("list[MessageSummary]", resp):
             yield ServiceMessage(msg_summary)
-    def get_message(self, message_id: str) -> Message:
-        from generated_client.mail_client_service_client.api.default import (
+
+    def get_message(self, message_id: str) -> MessageProtocol:
+        """Fetch a single message by ID from the service."""
+        from generated_client.mail_client_service_client.api.default import (  # noqa: PLC0415
             get_message_detail_messages_message_id_get as get_message_mod,
         )
+
         if self._test_client is not None:
             res = self._test_client.get(f"/messages/{message_id}")
             res.raise_for_status()
-            return ServiceMessage(MessageDetail(**res.json()))
+            detail_payload = cast("dict[str, Any]", res.json())
+            return ServiceMessage(MessageDetail(**detail_payload))
 
-        # Backwards-compatible path for clients exposing messages.get_message.sync
         if hasattr(self._client, "messages"):
-            msgs_api = getattr(self._client, "messages")
+            msgs_api = self._client.messages
             try:
                 resp = msgs_api.get_message.sync(message_id=message_id)
             except TypeError:
                 resp = msgs_api.get_message.sync(message_id)
             return ServiceMessage(resp)
 
-        resp = get_message_mod.sync(client=self._client, message_id=message_id)
-        return ServiceMessage(resp)
+        resp = _call_generated(get_message_mod.sync, client=self._client, message_id=message_id)
+        return ServiceMessage(cast("MessageDetail", resp))
 
     def delete_message(self, message_id: str) -> bool:
+        """Delete a message by ID from the service."""
         try:
-            from generated_client.mail_client_service_client.api.default import (
+            from generated_client.mail_client_service_client.api.default import (  # noqa: PLC0415
                 delete_message_messages_message_id_delete as delete_mod,
             )
 
             if self._test_client is not None:
                 res = self._test_client.delete(f"/messages/{message_id}")
-                if res.status_code == 200:
-                    return bool(res.json().get("ok", True))
+                if res.status_code == HTTP_OK:
+                    body = cast("dict[str, Any]", res.json())
+                    return bool(body.get("ok", True))
                 return False
 
-            # Backwards-compat: client.messages.delete_message.sync
             if hasattr(self._client, "messages"):
-                msgs_api = getattr(self._client, "messages")
+                msgs_api = self._client.messages
                 try:
                     r = msgs_api.delete_message.sync(message_id=message_id)
                 except TypeError:
                     r = msgs_api.delete_message.sync(message_id)
                 return bool(getattr(r, "ok", True)) if r is not None else True
 
-            res = delete_mod.sync(client=self._client, message_id=message_id)
-            # res is ActionResult; return its ok property if present, else True
+            res = _call_generated(delete_mod.sync, client=self._client, message_id=message_id)
             return getattr(res, "ok", True)
-        except Exception:
+        except (AttributeError, RuntimeError, ValueError, TypeError):
             return False
 
     def mark_as_read(self, message_id: str) -> bool:
+        """Mark a message as read by ID."""
         try:
-            from generated_client.mail_client_service_client.api.default import (
+            from generated_client.mail_client_service_client.api.default import (  # noqa: PLC0415
                 mark_message_as_read_messages_message_id_mark_as_read_post as mark_mod,
             )
 
             if self._test_client is not None:
                 res = self._test_client.post(f"/messages/{message_id}/mark-as-read")
-                if res.status_code == 200:
-                    return bool(res.json().get("ok", True))
+                if res.status_code == HTTP_OK:
+                    body = cast("dict[str, Any]", res.json())
+                    return bool(body.get("ok", True))
                 return False
 
-            # Backwards-compatible path for client.messages.mark_as_read.sync
             if hasattr(self._client, "messages"):
-                msgs_api = getattr(self._client, "messages")
+                msgs_api = self._client.messages
                 try:
                     r = msgs_api.mark_as_read.sync(message_id=message_id)
                 except TypeError:
                     r = msgs_api.mark_as_read.sync(message_id)
                 return bool(getattr(r, "ok", True)) if r is not None else True
 
-            res = mark_mod.sync(client=self._client, message_id=message_id)
+            res = _call_generated(mark_mod.sync, client=self._client, message_id=message_id)
             return getattr(res, "ok", True)
-        except Exception:
+        except (AttributeError, RuntimeError, ValueError, TypeError):
             return False
