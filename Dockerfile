@@ -9,7 +9,7 @@ COPY src/ ./src/
 # Install uv and sync dependencies
 RUN pip install uv
 
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev --package openai-client-service
 
 ENV PYTHONPATH=/app/src:/app/src/openai_client_service/src:/app/src/openai_client_impl/src:/app/src/openai_service_api/src
 
