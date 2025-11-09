@@ -64,7 +64,7 @@ mypy_path = [
     "src/openai_client_service_api_client/src",
     "src/openai_adapter/src",
 ]
-exclude = "(^|/)tests(/|$)|(^|/)src/generated_client(/|$)"
+exclude = "(^|/)tests(/|$)|(^|/)src/generated_client(/|$)|(^|/)src/adapter(/|$)"
 ignore_missing_imports = false
 warn_unused_ignores = false
 
