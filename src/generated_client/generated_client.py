@@ -13,9 +13,14 @@ import pkgutil
 import sys
 from types import ModuleType
 
-_root = importlib.import_module("mail_client_service_client")
-_api = importlib.import_module("mail_client_service_client.api")
-_models = importlib.import_module("mail_client_service_client.models")
+try:
+    _root = importlib.import_module("mail_client_service_client")
+    _api = importlib.import_module("mail_client_service_client.api")
+    _models = importlib.import_module("mail_client_service_client.models")
+except ModuleNotFoundError:
+    from . import mail_client_service_client as _root  # type: ignore[assignment]
+    from .mail_client_service_client import api as _api
+    from .mail_client_service_client import models as _models
 
 Client = _root.Client  # re-export main client class
 mail_client_service_client = _root
