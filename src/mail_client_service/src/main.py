@@ -45,7 +45,6 @@ def get_client_dep() -> mail_client_api.Client:
         os.chdir(original_cwd)
 
 
-
 class MessageSummary(BaseModel):
     """A summary of a message containing only essential information."""
 

@@ -102,6 +102,7 @@ def test_mark_as_read_failure(mock_get_message: MagicMock, mock_service: MagicMo
 @patch("gmail_client_impl.gmail_impl.message_module.get_message")
 def test_get_messages_yields_messages(mock_get_message: MagicMock, mock_service: MagicMock) -> None:
     """Ensure get_messages yields multiple GmailMessage instances."""
+
     def _side_effect(*args, **kwargs):
         if kwargs:
             msg_id = kwargs.get("msg_id", args[0] if args else "")

@@ -283,4 +283,3 @@ def test_missing_openai_key_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("openai_client_impl.ai_client.get_openai_key", lambda _: "")
     with pytest.raises(MissingOpenAIKeyError):
         AIClientImpl(subject="user")
-

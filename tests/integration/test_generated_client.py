@@ -77,7 +77,7 @@ class _FakeAIClient:
         """Pretend to delete the stored conversation."""
         return conversation_id == self._conv_id
 
-    def generate_response(
+    def compose_response(
         self,
         messages: list[str],
         *,
@@ -132,7 +132,7 @@ def test_service_endpoints_accessible_via_test_client() -> None:
 
     try:
         response = client.post(
-            "/ai/generate_response",
+            "/ai/compose-response",
             json={"messages": ["Hello!"], "conversation_id": None},
             cookies={"session_id": session_id},
         )
@@ -181,5 +181,5 @@ def test_service_handles_missing_session() -> None:
     """Test that the service properly validates the session cookie."""
     test_client_cls = _require_test_client()
     client = test_client_cls(app)
-    response = client.post("/ai/generate_response", json={"messages": ["Hello!"], "conversation_id": None})
+    response = client.post("/ai/compose-response", json={"messages": ["Hello!"], "conversation_id": None})
     assert response.status_code == HTTP_UNAUTHORIZED

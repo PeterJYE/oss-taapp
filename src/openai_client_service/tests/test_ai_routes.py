@@ -19,6 +19,7 @@ from openai_client_service.src.openai_client_service.dependencies import (
 try:
     from openai_client_impl import MissingOpenAIKeyError
 except ImportError:  # pragma: no cover
+
     class MissingOpenAIKeyError(Exception):
         """Fallback error used when openai_client_impl is unavailable."""
 
@@ -194,6 +195,7 @@ def test_delete_conversation_success(client: TestClient) -> None:
 @pytest.mark.unit
 def test_generate_response_success(monkeypatch: pytest.MonkeyPatch) -> None:
     """POST /ai/generate_response should succeed with valid payload and API key."""
+
     # Mock OpenAI client
     class MockMessage:
         def __init__(self) -> None:
@@ -236,6 +238,7 @@ def test_generate_response_success(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.unit
 def test_generate_response_with_schema(monkeypatch: pytest.MonkeyPatch) -> None:
     """POST /ai/generate_response should return structured JSON when schema is provided."""
+
     # Mock OpenAI client with JSON response
     class MockMessage:
         def __init__(self) -> None:
@@ -304,6 +307,7 @@ def test_generate_response_missing_api_key(monkeypatch: pytest.MonkeyPatch) -> N
 @pytest.mark.unit
 def test_generate_response_handles_api_error(monkeypatch: pytest.MonkeyPatch) -> None:
     """POST /ai/generate_response should handle OpenAI API errors."""
+
     class MockCompletions:
         @staticmethod
         def create(**_kwargs: Any) -> None:
@@ -334,6 +338,7 @@ def test_generate_response_handles_api_error(monkeypatch: pytest.MonkeyPatch) ->
 @pytest.mark.unit
 def test_generate_response_empty_content(monkeypatch: pytest.MonkeyPatch) -> None:
     """POST /ai/generate_response should handle empty content from OpenAI."""
+
     class MockMessage:
         def __init__(self) -> None:
             self.content = None
@@ -375,6 +380,7 @@ def test_generate_response_empty_content(monkeypatch: pytest.MonkeyPatch) -> Non
 @pytest.mark.unit
 def test_generate_response_invalid_json(monkeypatch: pytest.MonkeyPatch) -> None:
     """POST /ai/generate_response should handle invalid JSON in structured response."""
+
     class MockMessage:
         def __init__(self) -> None:
             self.content = "not valid json {"
@@ -422,6 +428,7 @@ def test_generate_response_invalid_json(monkeypatch: pytest.MonkeyPatch) -> None
 @pytest.mark.unit
 def test_generate_response_non_dict_response(monkeypatch: pytest.MonkeyPatch) -> None:
     """POST /ai/generate_response should handle non-dict response when schema is provided."""
+
     class MockMessage:
         def __init__(self) -> None:
             self.content = '["not", "a", "dict"]'
@@ -469,6 +476,7 @@ def test_generate_response_non_dict_response(monkeypatch: pytest.MonkeyPatch) ->
 @pytest.mark.unit
 def test_generate_response_schema_preparation(monkeypatch: pytest.MonkeyPatch) -> None:
     """POST /ai/generate_response should prepare schema with additionalProperties and required."""
+
     class MockMessage:
         def __init__(self) -> None:
             self.content = '{"action": "test", "message": "test"}'
