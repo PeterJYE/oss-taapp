@@ -22,6 +22,7 @@ dev = [
 
 [tool.uv.workspace]
 members = [
+  "src/ai_api",
   "src/mail_client_api",
   "src/gmail_client_impl",
   "src/mail_client_service",

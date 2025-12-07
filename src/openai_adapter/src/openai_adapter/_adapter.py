@@ -1,12 +1,13 @@
 """OpenAI Client Service adapter.
 
-Explicit HTTP client for five endpoints, no dynamic attribute access.
+Explicit HTTP client for service endpoints, no dynamic attribute access.
 
 Endpoints:
-- POST /ai/generate-response
-- POST /ai/conversations
-- GET  /ai/conversations/{conversation_id}
-- DELETE /ai/conversations/{conversation_id}
+- POST /ai/generate_response (no auth required)
+- POST /ai/compose-response (requires OAuth)
+- POST /ai/conversations (requires OAuth)
+- GET  /ai/conversations/{conversation_id} (requires OAuth)
+- DELETE /ai/conversations/{conversation_id} (requires OAuth)
 - GET  /health
 """
 # mypy: disable-error-code=no-any-return
@@ -76,25 +77,25 @@ class OpenAIServiceAdapter:
     Use OAuth login flow to obtain a session_id cookie before calling this adapter.
     """
 
-    def __init__(self, *, base_url: str, session_id: str, timeout: float = 5.0) -> None:
-        """Initialize the adapter with base URL and session cookie.
+    def __init__(self, *, base_url: str, session_id: str | None = None, timeout: float = 5.0) -> None:
+        """Initialize the adapter with base URL and optional session cookie.
 
         Args:
             base_url: The base URL of the OpenAI Client Service
-            session_id: The session ID cookie value from OAuth authentication
+            session_id: Optional session ID cookie value from OAuth authentication.
+                       Required for OAuth-protected endpoints, not needed for /ai/generate_response
             timeout: Request timeout in seconds
 
         """
         if not base_url:
             msg = "base_url is required"
             raise ValueError(msg)
-        if not session_id:
-            msg = "session_id is required"
-            raise ValueError(msg)
 
         self._base_url = base_url
         self._timeout = timeout
-        self._cookies: dict[str, str] = {"session_id": session_id}
+        self._cookies: dict[str, str] = {}
+        if session_id:
+            self._cookies["session_id"] = session_id
 
         self._http: Any
         host = (urlparse(base_url).hostname or "").lower()
@@ -111,14 +112,55 @@ class OpenAIServiceAdapter:
 
         self._http = httpx.Client(base_url=base_url, cookies=self._cookies, timeout=timeout, transport=transport)
 
-    def generate_response(self, messages: list[str], *, conversation_id: str | None = None) -> dict[str, object | None]:
-        """POST /ai/generate-response returning content, tokens_used, conversation_id.
+    def generate_response(
+        self,
+        user_input: str,
+        system_prompt: str,
+        response_schema: dict[str, Any] | None = None,
+    ) -> str | dict[str, Any]:
+        """POST /ai/generate_response returning string or structured dict.
+
+        This endpoint does not require OAuth authentication. It uses the API key
+        from the service's .env file.
+
+        Args:
+            user_input: The text provided by the user
+            system_prompt: The instruction set for the AI
+            response_schema: Optional JSON schema for structured output
+
+        Returns:
+            String response if no schema provided, or dict if schema provided
+
+        Raises:
+            AdapterAPIError: On non-2xx responses
+            AdapterNetworkError: On network errors
+
+        """
+        payload: dict[str, Any] = {
+            "user_input": user_input,
+            "system_prompt": system_prompt,
+        }
+        if response_schema is not None:
+            payload["response_schema"] = response_schema
+
+        try:
+            r = self._http.post("/ai/generate_response", json=payload)
+        except httpx.HTTPError as exc:
+            raise AdapterNetworkError(exc) from exc
+        if r.status_code >= HTTP_BAD:
+            raise AdapterAPIError(r.status_code, r.content)
+        return r.json()
+
+    def compose_response(self, messages: list[str], *, conversation_id: str | None = None) -> dict[str, object | None]:
+        """POST /ai/compose-response returning content, tokens_used, conversation_id.
+
+        This endpoint requires OAuth authentication (session_id cookie).
 
         Raises AdapterAPIError on non-2xx responses.
         """
         payload: dict[str, object | None] = {"messages": messages, "conversation_id": conversation_id}
         try:
-            r = self._http.post("/ai/generate-response", json=payload)
+            r = self._http.post("/ai/compose-response", json=payload)
         except httpx.HTTPError as exc:
             raise AdapterNetworkError(exc) from exc
         if r.status_code >= HTTP_BAD:
@@ -185,4 +227,3 @@ class OpenAIServiceAdapter:
             if status_str == "ok":
                 return True
         return False
-

@@ -1,27 +1,28 @@
 """AI operation routes for OpenAI Client Service."""
 
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from openai_client_impl import MissingOpenAIKeyError  # type: ignore[attr-defined]
+from openai_client_service.src.openai_client_service.ai_interface_impl import EnvAIImplementation
 from openai_client_service.src.openai_client_service.dependencies import get_ai_client
 from openai_service_api.src.openai_service_api.client import AIClient
 
 router = APIRouter()
 
 
-class GenerateResponseRequest(BaseModel):  # type: ignore[misc]
-    """Request model for generate response endpoint."""
+class ComposeResponseRequest(BaseModel):  # type: ignore[misc]
+    """Request model for compose response endpoint."""
 
     messages: list[str]
     conversation_id: str | None = None
 
 
-@router.post("/generate-response")  # type: ignore[misc]
-def generate_response(
-    request: GenerateResponseRequest,
+@router.post("/compose-response")  # type: ignore[misc]
+def compose_response(
+    request: ComposeResponseRequest,
     aiclient: Annotated[AIClient, Depends(get_ai_client)],
 ) -> dict[str, str | int | None]:
     """Generate a model response using the abstract AIClient interface.
@@ -30,7 +31,7 @@ def generate_response(
     conversation history, providing the core functionality for AI interactions.
 
     Args:
-        request: Generate response request with messages and optional conversation ID
+        request: Compose response request with messages and optional conversation ID
         aiclient: AI client instance for the authenticated user (injected via dependency)
 
     Returns:
@@ -41,7 +42,7 @@ def generate_response(
 
     """
     try:
-        response = aiclient.generate_response(request.messages, conversation_id=request.conversation_id)
+        response = aiclient.compose_response(request.messages, conversation_id=request.conversation_id)
     except MissingOpenAIKeyError as e:
         raise HTTPException(
             status_code=401,
@@ -164,3 +165,42 @@ def delete_conversation(
         if success:
             return {"ok": True, "conversation_id": conversation_id, "message": "Conversation deleted"}
         return {"ok": False, "message": "Conversation not found"}
+
+
+class GenerateResponseRequest(BaseModel):  # type: ignore[misc]
+    """Request model for generate response endpoint."""
+
+    user_input: str
+    system_prompt: str
+    response_schema: dict[str, Any] | None = None
+
+
+@router.post("/generate_response")  # type: ignore[misc]
+def generate_response(request: GenerateResponseRequest) -> dict[str, Any] | str:
+    """Generate a response using the shared AI interface with API key from .env.
+
+    This endpoint uses the AIInterface to generate responses without requiring
+    OAuth authentication. It reads the OpenAI API key from the OPENAI_API_KEY
+    environment variable (typically set in .env file).
+
+    Args:
+        request: Generate response request with user_input, system_prompt, and optional response_schema
+
+    Returns:
+        Response as a string (conversation) or a Dict (structured action data) based on response_schema
+
+    Raises:
+        HTTPException: If API key is not set in environment or request fails
+
+    """
+    try:
+        ai_impl = EnvAIImplementation()
+        return ai_impl.generate_response(
+            user_input=request.user_input,
+            system_prompt=request.system_prompt,
+            response_schema=request.response_schema,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e

@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from starlette import status
 
 from openai_client_service.main import app
+from openai_client_service.src.openai_client_service import ai_interface_impl
 from openai_client_service.src.openai_client_service.dependencies import (
     get_ai_client,
     get_authenticated_subject,
@@ -30,6 +31,7 @@ CONVERSATION_CREATED_AT = "2025-01-01T00:00:00Z"
 HTTP_OK = status.HTTP_200_OK
 HTTP_UNAUTHORIZED = status.HTTP_401_UNAUTHORIZED
 HTTP_BAD_REQUEST = status.HTTP_400_BAD_REQUEST
+HTTP_INTERNAL_SERVER_ERROR = status.HTTP_500_INTERNAL_SERVER_ERROR
 
 
 @pytest.fixture
@@ -60,7 +62,7 @@ class FakeAIClient:
         self.raise_value = False
         self.raise_runtime = False
 
-    def generate_response(self, messages: list[str], *, conversation_id: str | None = None) -> FakeResponse:
+    def compose_response(self, messages: list[str], *, conversation_id: str | None = None) -> FakeResponse:
         """Simulate generating a response."""
         if self.raise_missing:
             error_message = "missing key"
@@ -129,10 +131,10 @@ class FakeConversation:
 
 
 @pytest.mark.unit
-def test_generate_response_success(client: TestClient) -> None:
-    """POST /ai/generate-response should succeed with valid payload."""
+def test_compose_response_success(client: TestClient) -> None:
+    """POST /ai/compose-response should succeed with valid payload."""
     payload = {"messages": ["hello"], "conversation_id": None}
-    resp = client.post("/ai/generate-response", json=payload)
+    resp = client.post("/ai/compose-response", json=payload)
     assert resp.status_code == HTTP_OK
     data = resp.json()
     assert data["content"] == "hi"
@@ -141,24 +143,24 @@ def test_generate_response_success(client: TestClient) -> None:
 
 
 @pytest.mark.unit
-def test_generate_response_handles_missing_key(client: TestClient) -> None:
+def test_compose_response_handles_missing_key(client: TestClient) -> None:
     """Missing API keys should return HTTP 401."""
     fake_client: FakeAIClient = client.app.state.fake_ai_client  # type: ignore[attr-defined]
     fake_client.raise_missing = True
 
-    resp = client.post("/ai/generate-response", json={"messages": ["hi"]})
+    resp = client.post("/ai/compose-response", json={"messages": ["hi"]})
     assert resp.status_code == HTTP_UNAUTHORIZED
     detail = resp.json()["detail"]
     assert "hint" in detail
 
 
 @pytest.mark.unit
-def test_generate_response_handles_value_error(client: TestClient) -> None:
+def test_compose_response_handles_value_error(client: TestClient) -> None:
     """Backend value errors should surface as HTTP 400."""
     fake_client: FakeAIClient = client.app.state.fake_ai_client  # type: ignore[attr-defined]
     fake_client.raise_value = True
 
-    resp = client.post("/ai/generate-response", json={"messages": ["hi"]})
+    resp = client.post("/ai/compose-response", json={"messages": ["hi"]})
     assert resp.status_code == HTTP_BAD_REQUEST
     assert "bad request" in resp.text.lower()
 
@@ -187,3 +189,330 @@ def test_delete_conversation_success(client: TestClient) -> None:
     resp = client.delete(f"/ai/conversations/{CONVERSATION_LOOKUP_ID}")
     assert resp.status_code == HTTP_OK
     assert resp.json()["ok"] is True
+
+
+@pytest.mark.unit
+def test_generate_response_success(monkeypatch: pytest.MonkeyPatch) -> None:
+    """POST /ai/generate_response should succeed with valid payload and API key."""
+    # Mock OpenAI client
+    class MockMessage:
+        def __init__(self) -> None:
+            self.content = "Hello! How can I help you?"
+
+    class MockChoice:
+        def __init__(self) -> None:
+            self.message = MockMessage()
+
+    class MockCompletion:
+        def __init__(self) -> None:
+            self.choices = [MockChoice()]
+
+    class MockCompletions:
+        @staticmethod
+        def create(**_kwargs: Any) -> MockCompletion:
+            return MockCompletion()
+
+    class MockChat:
+        def __init__(self) -> None:
+            self.completions = MockCompletions()
+
+    class MockOpenAI:
+        def __init__(self, **_kwargs: Any) -> None:
+            self.chat = MockChat()
+
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+    monkeypatch.setattr(ai_interface_impl, "OpenAI", MockOpenAI)
+
+    test_client = TestClient(app)
+    payload = {
+        "user_input": "Hello",
+        "system_prompt": "You are a helpful assistant.",
+    }
+    resp = test_client.post("/ai/generate_response", json=payload)
+    assert resp.status_code == HTTP_OK
+    assert resp.json() == "Hello! How can I help you?"
+
+
+@pytest.mark.unit
+def test_generate_response_with_schema(monkeypatch: pytest.MonkeyPatch) -> None:
+    """POST /ai/generate_response should return structured JSON when schema is provided."""
+    # Mock OpenAI client with JSON response
+    class MockMessage:
+        def __init__(self) -> None:
+            self.content = '{"action": "greet", "message": "Hello!"}'
+
+    class MockChoice:
+        def __init__(self) -> None:
+            self.message = MockMessage()
+
+    class MockCompletion:
+        def __init__(self) -> None:
+            self.choices = [MockChoice()]
+
+    class MockCompletions:
+        @staticmethod
+        def create(**_kwargs: Any) -> MockCompletion:
+            return MockCompletion()
+
+    class MockChat:
+        def __init__(self) -> None:
+            self.completions = MockCompletions()
+
+    class MockOpenAI:
+        def __init__(self, **_kwargs: Any) -> None:
+            self.chat = MockChat()
+
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+    monkeypatch.setattr(ai_interface_impl, "OpenAI", MockOpenAI)
+
+    test_client = TestClient(app)
+    payload = {
+        "user_input": "Hello",
+        "system_prompt": "You are a helpful assistant.",
+        "response_schema": {
+            "type": "object",
+            "properties": {
+                "action": {"type": "string"},
+                "message": {"type": "string"},
+            },
+            "required": ["action", "message"],
+        },
+    }
+    resp = test_client.post("/ai/generate_response", json=payload)
+    assert resp.status_code == HTTP_OK
+    data = resp.json()
+    assert isinstance(data, dict)
+    assert "action" in data
+    assert "message" in data
+
+
+@pytest.mark.unit
+def test_generate_response_missing_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    """POST /ai/generate_response should return 400 when OPENAI_API_KEY is not set."""
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    test_client = TestClient(app)
+    payload = {
+        "user_input": "Hello",
+        "system_prompt": "You are a helpful assistant.",
+    }
+    resp = test_client.post("/ai/generate_response", json=payload)
+    assert resp.status_code == HTTP_BAD_REQUEST
+    assert "OPENAI_API_KEY" in resp.json()["detail"]
+
+
+@pytest.mark.unit
+def test_generate_response_handles_api_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    """POST /ai/generate_response should handle OpenAI API errors."""
+    class MockCompletions:
+        @staticmethod
+        def create(**_kwargs: Any) -> None:
+            error_msg = "API rate limit exceeded"
+            raise ValueError(error_msg)
+
+    class MockChat:
+        def __init__(self) -> None:
+            self.completions = MockCompletions()
+
+    class MockOpenAI:
+        def __init__(self, **_kwargs: Any) -> None:
+            self.chat = MockChat()
+
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+    monkeypatch.setattr(ai_interface_impl, "OpenAI", MockOpenAI)
+
+    test_client = TestClient(app)
+    payload = {
+        "user_input": "Hello",
+        "system_prompt": "You are a helpful assistant.",
+    }
+    resp = test_client.post("/ai/generate_response", json=payload)
+    assert resp.status_code == HTTP_INTERNAL_SERVER_ERROR
+    assert "AI service failed" in resp.json()["detail"]
+
+
+@pytest.mark.unit
+def test_generate_response_empty_content(monkeypatch: pytest.MonkeyPatch) -> None:
+    """POST /ai/generate_response should handle empty content from OpenAI."""
+    class MockMessage:
+        def __init__(self) -> None:
+            self.content = None
+
+    class MockChoice:
+        def __init__(self) -> None:
+            self.message = MockMessage()
+
+    class MockCompletion:
+        def __init__(self) -> None:
+            self.choices = [MockChoice()]
+
+    class MockCompletions:
+        @staticmethod
+        def create(**_kwargs: Any) -> MockCompletion:
+            return MockCompletion()
+
+    class MockChat:
+        def __init__(self) -> None:
+            self.completions = MockCompletions()
+
+    class MockOpenAI:
+        def __init__(self, **_kwargs: Any) -> None:
+            self.chat = MockChat()
+
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+    monkeypatch.setattr(ai_interface_impl, "OpenAI", MockOpenAI)
+
+    test_client = TestClient(app)
+    payload = {
+        "user_input": "Hello",
+        "system_prompt": "You are a helpful assistant.",
+    }
+    resp = test_client.post("/ai/generate_response", json=payload)
+    assert resp.status_code == HTTP_INTERNAL_SERVER_ERROR
+    assert "empty response" in resp.json()["detail"]
+
+
+@pytest.mark.unit
+def test_generate_response_invalid_json(monkeypatch: pytest.MonkeyPatch) -> None:
+    """POST /ai/generate_response should handle invalid JSON in structured response."""
+    class MockMessage:
+        def __init__(self) -> None:
+            self.content = "not valid json {"
+
+    class MockChoice:
+        def __init__(self) -> None:
+            self.message = MockMessage()
+
+    class MockCompletion:
+        def __init__(self) -> None:
+            self.choices = [MockChoice()]
+
+    class MockCompletions:
+        @staticmethod
+        def create(**_kwargs: Any) -> MockCompletion:
+            return MockCompletion()
+
+    class MockChat:
+        def __init__(self) -> None:
+            self.completions = MockCompletions()
+
+    class MockOpenAI:
+        def __init__(self, **_kwargs: Any) -> None:
+            self.chat = MockChat()
+
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+    monkeypatch.setattr(ai_interface_impl, "OpenAI", MockOpenAI)
+
+    test_client = TestClient(app)
+    payload = {
+        "user_input": "Hello",
+        "system_prompt": "You are a helpful assistant.",
+        "response_schema": {
+            "type": "object",
+            "properties": {
+                "action": {"type": "string"},
+            },
+        },
+    }
+    resp = test_client.post("/ai/generate_response", json=payload)
+    assert resp.status_code == HTTP_INTERNAL_SERVER_ERROR
+    assert "Failed to parse structured response" in resp.json()["detail"]
+
+
+@pytest.mark.unit
+def test_generate_response_non_dict_response(monkeypatch: pytest.MonkeyPatch) -> None:
+    """POST /ai/generate_response should handle non-dict response when schema is provided."""
+    class MockMessage:
+        def __init__(self) -> None:
+            self.content = '["not", "a", "dict"]'
+
+    class MockChoice:
+        def __init__(self) -> None:
+            self.message = MockMessage()
+
+    class MockCompletion:
+        def __init__(self) -> None:
+            self.choices = [MockChoice()]
+
+    class MockCompletions:
+        @staticmethod
+        def create(**_kwargs: Any) -> MockCompletion:
+            return MockCompletion()
+
+    class MockChat:
+        def __init__(self) -> None:
+            self.completions = MockCompletions()
+
+    class MockOpenAI:
+        def __init__(self, **_kwargs: Any) -> None:
+            self.chat = MockChat()
+
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+    monkeypatch.setattr(ai_interface_impl, "OpenAI", MockOpenAI)
+
+    test_client = TestClient(app)
+    payload = {
+        "user_input": "Hello",
+        "system_prompt": "You are a helpful assistant.",
+        "response_schema": {
+            "type": "object",
+            "properties": {
+                "action": {"type": "string"},
+            },
+        },
+    }
+    resp = test_client.post("/ai/generate_response", json=payload)
+    assert resp.status_code == HTTP_INTERNAL_SERVER_ERROR
+    assert "must be a dictionary" in resp.json()["detail"]
+
+
+@pytest.mark.unit
+def test_generate_response_schema_preparation(monkeypatch: pytest.MonkeyPatch) -> None:
+    """POST /ai/generate_response should prepare schema with additionalProperties and required."""
+    class MockMessage:
+        def __init__(self) -> None:
+            self.content = '{"action": "test", "message": "test"}'
+
+    class MockChoice:
+        def __init__(self) -> None:
+            self.message = MockMessage()
+
+    class MockCompletion:
+        def __init__(self) -> None:
+            self.choices = [MockChoice()]
+
+    class MockCompletions:
+        @staticmethod
+        def create(**_kwargs: Any) -> MockCompletion:
+            return MockCompletion()
+
+    class MockChat:
+        def __init__(self) -> None:
+            self.completions = MockCompletions()
+
+    class MockOpenAI:
+        def __init__(self, **_kwargs: Any) -> None:
+            self.chat = MockChat()
+
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+    monkeypatch.setattr(ai_interface_impl, "OpenAI", MockOpenAI)
+
+    test_client = TestClient(app)
+    # Schema without additionalProperties and required
+    payload = {
+        "user_input": "Hello",
+        "system_prompt": "You are a helpful assistant.",
+        "response_schema": {
+            "type": "object",
+            "properties": {
+                "action": {"type": "string"},
+                "message": {"type": "string"},
+            },
+        },
+    }
+    resp = test_client.post("/ai/generate_response", json=payload)
+    assert resp.status_code == HTTP_OK
+    data = resp.json()
+    assert isinstance(data, dict)
+    assert "action" in data
+    assert "message" in data

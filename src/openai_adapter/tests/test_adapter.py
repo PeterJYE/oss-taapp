@@ -79,13 +79,13 @@ def test_create_conversation_success() -> None:
     assert adapter.create_conversation() == "abc"
 
 
-def test_generate_response_api_error_unauthorized() -> None:
-    """generate_response raises AdapterAPIError on 401 without API key."""
+def test_compose_response_api_error_unauthorized() -> None:
+    """compose_response raises AdapterAPIError on 401 without API key."""
     resp = DummyResp(status_code=401, content=b"Missing API key")
     adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="test-session-1")
     adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined,assignment]  # noqa: SLF001
     with pytest.raises(AdapterAPIError):
-        adapter.generate_response(["hello"])  # no API key -> expect 401
+        adapter.compose_response(["hello"])  # no API key -> expect 401
 
 
 def test_get_conversation_success() -> None:
@@ -190,10 +190,10 @@ def test_init_raises_on_empty_base_url() -> None:
         OpenAIServiceAdapter(base_url="", session_id="test-session-1")
 
 
-def test_init_raises_on_empty_session_id() -> None:
-    """Constructor should raise ValueError when session_id is empty."""
-    with pytest.raises(ValueError, match="session_id is required"):
-        OpenAIServiceAdapter(base_url="http://example.com", session_id="")
+def test_init_allows_empty_session_id() -> None:
+    """Constructor should allow empty session_id for unauthenticated endpoints."""
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="")
+    assert adapter._cookies == {}  # noqa: SLF001
 
 
 def test_constructor_uses_asgi_transport_when_testserver(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -225,22 +225,22 @@ def test_constructor_uses_asgi_transport_when_testserver(monkeypatch: pytest.Mon
     assert called["count"] == 1
 
 
-def test_generate_response_network_error_raises() -> None:
-    """generate_response raises AdapterNetworkError when httpx errors."""
+def test_compose_response_network_error_raises() -> None:
+    """compose_response raises AdapterNetworkError when httpx errors."""
     adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="test-session-1")
     adapter._http = ErroringHTTP()  # type: ignore[attr-defined,assignment]  # noqa: SLF001
     with pytest.raises(AdapterAPIError.__mro__[1]):  # AdapterNetworkError subclass of AdapterError
-        adapter.generate_response(["hi"])  # type: ignore[arg-type]
+        adapter.compose_response(["hi"])  # type: ignore[arg-type]
 
 
-def test_generate_response_success() -> None:
-    """generate_response returns content/tokens/conversation_id on 200."""
+def test_compose_response_success() -> None:
+    """compose_response returns content/tokens/conversation_id on 200."""
     expected_tokens = 10
     payload = {"content": "ok", "tokens_used": expected_tokens, "conversation_id": "c1"}
     resp = DummyResp(status_code=200, json_data=payload)
     adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id="test-session-1")
     adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined,assignment]  # noqa: SLF001
-    out = adapter.generate_response(["hi"])  # type: ignore[arg-type]
+    out = adapter.compose_response(["hi"])  # type: ignore[arg-type]
     assert out["content"] == "ok"
     assert out["tokens_used"] == expected_tokens
     assert out["conversation_id"] == "c1"
@@ -268,3 +268,41 @@ def test_delete_conversation_network_error_raises() -> None:
     adapter._http = ErroringHTTP()  # type: ignore[attr-defined,assignment]  # noqa: SLF001
     with pytest.raises(AdapterAPIError.__mro__[1]):
         adapter.delete_conversation("abc")
+
+
+def test_generate_response_success() -> None:
+    """generate_response returns string or dict on 200."""
+    resp = DummyResp(status_code=200, json_data={"location": "NYC", "temperature": 72})
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id=None)
+    adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined,assignment]  # noqa: SLF001
+    result = adapter.generate_response("What's the weather?", "You are a weather assistant.")
+    assert isinstance(result, dict)
+    assert result["location"] == "NYC"
+
+
+def test_generate_response_with_schema() -> None:
+    """generate_response returns structured dict when schema provided."""
+    resp = DummyResp(status_code=200, json_data={"action": "greet", "message": "Hello"})
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id=None)
+    adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined,assignment]  # noqa: SLF001
+    schema = {"type": "object", "properties": {"action": {"type": "string"}}}
+    result = adapter.generate_response("Hello", "You are helpful.", response_schema=schema)
+    assert isinstance(result, dict)
+    assert "action" in result
+
+
+def test_generate_response_api_error() -> None:
+    """generate_response raises AdapterAPIError on non-2xx."""
+    resp = DummyResp(status_code=400, content=b"Bad request")
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id=None)
+    adapter._http = DummyHTTP(resp)  # type: ignore[attr-defined,assignment]  # noqa: SLF001
+    with pytest.raises(AdapterAPIError):
+        adapter.generate_response("test", "test")
+
+
+def test_generate_response_network_error() -> None:
+    """generate_response raises AdapterNetworkError when httpx errors."""
+    adapter = OpenAIServiceAdapter(base_url="http://example.com", session_id=None)
+    adapter._http = ErroringHTTP()  # type: ignore[attr-defined,assignment]  # noqa: SLF001
+    with pytest.raises(AdapterAPIError.__mro__[1]):
+        adapter.generate_response("test", "test")

@@ -44,7 +44,7 @@ class AIClientImpl:
             raise MissingOpenAIKeyError(error_msg)
         return OpenAI(api_key=key)
 
-    def generate_response(
+    def compose_response(
         self,
         messages: list[str],
         *,

@@ -107,7 +107,7 @@ def test_client_can_be_generated_from_test_service() -> None:
     spec = response.json()
     assert "paths" in spec
     assert "/health" in spec["paths"]
-    assert "/ai/generate-response" in spec["paths"]
+    assert "/ai/generate_response" in spec["paths"]
     assert "/ai/conversations" in spec["paths"]
     assert "/auth/set-openai-key" in spec["paths"]
 
@@ -132,7 +132,7 @@ def test_service_endpoints_accessible_via_test_client() -> None:
 
     try:
         response = client.post(
-            "/ai/generate-response",
+            "/ai/generate_response",
             json={"messages": ["Hello!"], "conversation_id": None},
             cookies={"session_id": session_id},
         )
@@ -167,7 +167,7 @@ def test_all_endpoints_have_request_body_schemas() -> None:
     client = test_client_cls(app)
     spec = client.get("/openapi.json").json()
 
-    generate_spec = spec.get("paths", {}).get("/ai/generate-response", {})
+    generate_spec = spec.get("paths", {}).get("/ai/generate_response", {})
     post_spec = generate_spec.get("post", {})
     assert "requestBody" in post_spec
 
@@ -181,5 +181,5 @@ def test_service_handles_missing_session() -> None:
     """Test that the service properly validates the session cookie."""
     test_client_cls = _require_test_client()
     client = test_client_cls(app)
-    response = client.post("/ai/generate-response", json={"messages": ["Hello!"], "conversation_id": None})
+    response = client.post("/ai/generate_response", json={"messages": ["Hello!"], "conversation_id": None})
     assert response.status_code == HTTP_UNAUTHORIZED

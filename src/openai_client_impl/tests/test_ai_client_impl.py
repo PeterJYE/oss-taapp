@@ -136,12 +136,12 @@ def _install_common_stubs(
     return captured
 
 
-def test_generate_response_creates_conversation_and_saves(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_compose_response_creates_conversation_and_saves(monkeypatch: pytest.MonkeyPatch) -> None:
     """New conversations should be created and persisted."""
     captured = _install_common_stubs(monkeypatch)
 
     client = AIClientImpl(subject="user")
-    resp = client.generate_response(["hello there"])
+    resp = client.compose_response(["hello there"])
 
     assert isinstance(resp, FakeResponse)
     assert resp.content == "ok-response"
@@ -157,14 +157,14 @@ def test_generate_response_creates_conversation_and_saves(monkeypatch: pytest.Mo
     assert captured["completions"].calls[0]["model"] == "gpt-4o-mini"
 
 
-def test_generate_response_appends_existing_conversation(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_compose_response_appends_existing_conversation(monkeypatch: pytest.MonkeyPatch) -> None:
     """When conversation history exists, messages should be appended and saved once."""
     captured = _install_common_stubs(monkeypatch)
     existing_messages = json.dumps([{"role": "user", "content": "prior"}])
     captured["conversation_lookup"] = {"conv-999": ("conv-999", "2024-01-01T00:00:00Z", existing_messages)}
 
     client = AIClientImpl(subject="user")
-    resp = client.generate_response(["again"], conversation_id="conv-999")
+    resp = client.compose_response(["again"], conversation_id="conv-999")
 
     assert resp.conversation_id == "conv-999"
     # Only update save (no create)
@@ -176,16 +176,16 @@ def test_generate_response_appends_existing_conversation(monkeypatch: pytest.Mon
     assert captured["conversation_queries"] == ["conv-999", "conv-999"]
 
 
-def test_generate_response_requires_messages(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_compose_response_requires_messages(monkeypatch: pytest.MonkeyPatch) -> None:
     """Empty message list should raise ValueError before contacting the API."""
     _install_common_stubs(monkeypatch)
     client = AIClientImpl(subject="user")
 
     with pytest.raises(ValueError, match="Messages list cannot be empty"):
-        client.generate_response([])
+        client.compose_response([])
 
 
-def test_generate_response_propagates_api_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_compose_response_propagates_api_errors(monkeypatch: pytest.MonkeyPatch) -> None:
     """Exceptions from the OpenAI SDK should be wrapped in RuntimeError."""
     captured = _install_common_stubs(monkeypatch)
 
@@ -198,7 +198,7 @@ def test_generate_response_propagates_api_errors(monkeypatch: pytest.MonkeyPatch
     client = AIClientImpl(subject="user")
 
     with pytest.raises(RuntimeError, match="network boom"):
-        client.generate_response(["hi"])
+        client.compose_response(["hi"])
 
 
 def test_create_conversation_handles_storage_failure(monkeypatch: pytest.MonkeyPatch) -> None:
