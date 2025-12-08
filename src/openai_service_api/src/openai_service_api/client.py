@@ -12,7 +12,7 @@ class AIClient(ABC):
     """Abstract base class for AI service operations."""
 
     @abstractmethod
-    def generate_response(
+    def compose_response(
         self,
         messages: list[str],
         *,

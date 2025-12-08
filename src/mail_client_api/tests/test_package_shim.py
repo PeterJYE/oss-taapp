@@ -15,4 +15,3 @@ def test_exports_and_modules() -> None:
     inner_message = mail_client_api.message
     assert inner_client is not None
     assert inner_message is not None
-

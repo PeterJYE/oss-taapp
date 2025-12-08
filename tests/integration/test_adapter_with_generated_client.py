@@ -67,7 +67,7 @@ def test_adapter_end_to_end_against_app() -> None:
         assert adapter.delete_conversation(conv_id) is True
 
         with pytest.raises(AdapterAPIError) as exc_info:
-            adapter.generate_response(["hello there"], conversation_id=None)
+            adapter.compose_response(["hello there"], conversation_id=None)
         assert exc_info.value.status_code == EXPECTED_UNAUTHORIZED
     finally:
         destroy_session_for_testing(session_id)
@@ -97,7 +97,7 @@ class _FakeAIClient:
         """Pretend to delete the stored conversation."""
         return conversation_id == self._conv_id
 
-    def generate_response(
+    def compose_response(
         self,
         messages: list[str],
         *,

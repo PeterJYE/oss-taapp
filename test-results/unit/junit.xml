@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="7" skipped="4" tests="174" time="2.382" timestamp="2025-12-07T17:56:45.616515-05:00" hostname="Rachits-MacBook-Pro.local"><testcase classname="src.adapter.tests.test_adapter_api_module_paths" name="test_adapter_calls_generated_api_modules" time="0.001" /><testcase classname="src.adapter.tests.test_adapter_api_module_paths" name="test_adapter_returns_false_on_api_exceptions" time="0.000" /><testcase classname="src.adapter.tests.test_service_adapter" name="test_service_message_and_adapter_roundtrip" time="0.000" /><testcase classname="src.adapter.tests.test_service_adapter_generated_path" name="test_generated_client_code_paths" time="0.000" /><testcase classname="src.adapter.tests.test_service_adapter_generated_path" name="test_initializes_test_client" time="0.000" /><testcase classname="src.adapter.tests.test_service_adapter_generated_path" name="test_messages_api_typeerror_retry" time="0.000" /><testcase classname="src.adapter.tests.test_service_adapter_generated_path" name="test_call_generated_aliases_and_failures" time="0.000" /><testcase classname="src.adapter.tests.test_service_adapter_generated_path" name="test_instantiate_generated_client_attempts" time="0.000" /><testcase classname="src.generated_client.tests.test_api_endpoints_fake_client" name="test_list_messages_api_module" time="0.000" /><testcase classname="src.generated_client.tests.test_api_endpoints_fake_client" name="test_get_message_detail_api_module" time="0.000" /><testcase classname="src.generated_client.tests.test_api_endpoints_fake_client" name="test_mark_read_and_delete_modules" time="0.000" /><testcase classname="src.generated_client.tests.test_client_and_api_asgi" name="test_generated_client_client_and_api_asgi" time="0.012" /><testcase classname="src.generated_client.tests.test_client_behaviour" name="test_client_headers_cookies_and_context_manager" time="0.060" /><testcase classname="src.generated_client.tests.test_client_behaviour" name="test_authenticated_client_sets_auth_header" time="0.027" /><testcase classname="src.generated_client.tests.test_models_roundtrip" name="test_message_summary_roundtrip" time="0.000" /><testcase classname="src.generated_client.tests.test_models_roundtrip" name="test_message_detail_roundtrip" time="0.000" /><testcase classname="src.generated_client.tests.test_models_roundtrip_simple" name="test_message_models_roundtrip" time="0.000" /><testcase classname="src.gmail_client_impl.tests.test_authentication.TestGmailClientAuthentication" name="test_init_with_provided_service_skips_auth" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_authentication.TestGmailClientAuthentication" name="test_init_with_env_vars_success" time="0.002" /><testcase classname="src.gmail_client_impl.tests.test_authentication.TestGmailClientAuthentication" name="test_init_with_custom_token_uri" time="0.002" /><testcase classname="src.gmail_client_impl.tests.test_authentication.TestGmailClientAuthentication" name="test_init_env_vars_refresh_failure" time="0.002" /><testcase classname="src.gmail_client_impl.tests.test_authentication.TestGmailClientAuthentication" name="test_init_with_token_file_success" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_authentication.TestGmailClientAuthentication" name="test_init_token_file_needs_refresh" time="0.002" /><testcase classname="src.gmail_client_impl.tests.test_authentication.TestGmailClientAuthentication" name="test_init_interactive_mode_forces_flow" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_authentication.TestGmailClientAuthentication" name="test_init_no_valid_credentials_raises_error" time="0.028" /><testcase classname="src.gmail_client_impl.tests.test_authentication.TestGmailClientAuthentication" name="test_build_service_failure" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_authentication.TestGmailClientHelperMethods" name="test_run_interactive_flow_success" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_authentication.TestGmailClientHelperMethods" name="test_run_interactive_flow_missing_credentials" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_authentication.TestGmailClientHelperMethods" name="test_run_interactive_flow_exception" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_authentication.TestGmailClientHelperMethods" name="test_save_token_success" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_authentication.TestGmailClientHelperMethods" name="test_save_token_exception" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_authentication.TestGmailClientConstants" name="test_scopes_constant" time="0.000" /><testcase classname="src.gmail_client_impl.tests.test_authentication.TestGmailClientConstants" name="test_failure_message_constant" time="0.000" /><testcase classname="src.gmail_client_impl.tests.test_core_methods.TestGmailClientCoreMethods" name="test_get_message_success" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_core_methods.TestGmailClientCoreMethods" name="test_get_message_no_raw_content" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_core_methods.TestGmailClientCoreMethods" name="test_get_message_api_exception" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_core_methods.TestGmailClientCoreMethods" name="test_delete_message_success" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_core_methods.TestGmailClientCoreMethods" name="test_delete_message_api_exception" time="0.002" /><testcase classname="src.gmail_client_impl.tests.test_core_methods.TestGmailClientCoreMethods" name="test_mark_as_read_success" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_core_methods.TestGmailClientCoreMethods" name="test_mark_as_read_api_exception" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_core_methods.TestGmailClientCoreMethods" name="test_get_messages_success" time="0.002" /><testcase classname="src.gmail_client_impl.tests.test_core_methods.TestGmailClientCoreMethods" name="test_get_messages_empty_inbox" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_core_methods.TestGmailClientCoreMethods" name="test_get_messages_no_messages_key" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_core_methods.TestGmailClientCoreMethods" name="test_get_messages_message_without_id" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_core_methods.TestGmailClientCoreMethods" name="test_get_messages_message_without_raw_content" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_core_methods.TestGmailClientCoreMethods" name="test_get_messages_default_max_results" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_gmail_impl_unit" name="test_init_with_service" time="0.002" /><testcase classname="src.gmail_client_impl.tests.test_gmail_impl_unit" name="test_interactive_auth" time="0.002" /><testcase classname="src.gmail_client_impl.tests.test_gmail_impl_unit" name="test_get_message_returns_message" time="0.002" /><testcase classname="src.gmail_client_impl.tests.test_gmail_impl_unit" name="test_delete_message_success" time="0.002" /><testcase classname="src.gmail_client_impl.tests.test_gmail_impl_unit" name="test_delete_message_failure" time="0.002" /><testcase classname="src.gmail_client_impl.tests.test_gmail_impl_unit" name="test_mark_as_read_success" time="0.002" /><testcase classname="src.gmail_client_impl.tests.test_gmail_impl_unit" name="test_mark_as_read_failure" time="0.003" /><testcase classname="src.gmail_client_impl.tests.test_gmail_impl_unit" name="test_get_messages_yields_messages" time="0.002" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_edge_cases.TestEdgeCases" name="test_extremely_large_message_id" time="0.000" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_edge_cases.TestEdgeCases" name="test_unicode_in_message_content" time="0.000" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_edge_cases.TestEdgeCases" name="test_very_long_subject_line" time="0.000" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_edge_cases.TestEdgeCases" name="test_very_long_message_body" time="0.000" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_edge_cases.TestEdgeCases" name="test_malformed_headers" time="0.000" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_edge_cases.TestEdgeCases" name="test_binary_data_in_raw_input" time="0.000" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_edge_cases.TestEdgeCases" name="test_empty_raw_data" time="0.000" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_edge_cases.TestEdgeCases" name="test_whitespace_only_raw_data" time="0.000" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_edge_cases.TestEdgeCases" name="test_non_ascii_message_id" time="0.000" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_edge_cases.TestEdgeCases" name="test_deeply_nested_multipart_message" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_edge_cases.TestEdgeCases" name="test_message_with_null_bytes" time="0.000" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_edge_cases.TestEdgeCases" name="test_repeated_property_access" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_edge_cases.TestEdgeCases" name="test_message_with_only_headers_no_body" time="0.000" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_impl.TestGmailMessage" name="test_basic_message_creation" time="0.000" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_impl.TestGmailMessage" name="test_message_with_encoded_subject" time="0.002" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_impl.TestGmailMessage" name="test_multipart_message" time="0.002" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_impl.TestGmailMessage" name="test_date_parsing_fallback" time="0.000" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_impl.TestGmailMessage" name="test_subject_without_encoding" time="0.000" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_impl.TestGmailMessage" name="test_message_with_attachment" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_impl.TestGmailMessage" name="test_message_body_encoding" time="0.000" /><testcase classname="src.gmail_client_impl.tests.test_gmail_message_impl.TestGmailMessage" name="test_message_without_plain_text_body" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_message_impl_unit" name="test_valid_message_decoding" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_message_impl_unit" name="test_invalid_base64_triggers_error_message" time="0.000" /><testcase classname="src.gmail_client_impl.tests.test_message_impl_unit" name="test_is_binary_garbage_detection" time="0.000" /><testcase classname="src.gmail_client_impl.tests.test_message_impl_unit" name="test_get_message_impl_returns_gmail_message" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_message_impl_unit" name="test_register_overrides_message_getter" time="0.001" /><testcase classname="src.gmail_client_impl.tests.test_registration" name="test_register_binds_factories" time="0.000" /><testcase classname="src.mail_client_api.tests.test_client_unit" name="test_client_is_abstract" time="0.000" /><testcase classname="src.mail_client_api.tests.test_client_unit" name="test_get_client_not_implemented" time="0.000" /><testcase classname="src.mail_client_api.tests.test_client_unit" name="test_dummy_client_get_message" time="0.000" /><testcase classname="src.mail_client_api.tests.test_client_unit" name="test_dummy_client_delete_message" time="0.000" /><testcase classname="src.mail_client_api.tests.test_client_unit" name="test_dummy_client_mark_as_read" time="0.000" /><testcase classname="src.mail_client_api.tests.test_client_unit" name="test_dummy_client_get_messages_iterator" time="0.000" /><testcase classname="src.mail_client_api.tests.test_mail_client_api" name="test_client_get_messages" time="0.003" /><testcase classname="src.mail_client_api.tests.test_mail_client_api" name="test_client_get_message" time="0.001" /><testcase classname="src.mail_client_api.tests.test_mail_client_api" name="test_client_delete_message" time="0.000" /><testcase classname="src.mail_client_api.tests.test_mail_client_api" name="test_client_mark_as_read" time="0.000" /><testcase classname="src.mail_client_api.tests.test_message_abstraction" name="test_message_abstraction_comprehensive" time="0.000" /><testcase classname="src.mail_client_api.tests.test_message_unit" name="test_message_is_abstract" time="0.000" /><testcase classname="src.mail_client_api.tests.test_message_unit" name="test_get_message_not_implemented" time="0.000" /><testcase classname="src.mail_client_api.tests.test_message_unit" name="test_dummy_message_properties" time="0.000" /><testcase classname="src.mail_client_api.tests.test_message_unit" name="test_dummy_message_str_properties_are_strings" time="0.000" /><testcase classname="src.mail_client_api.tests.test_package_shim" name="test_exports_and_modules" time="0.000" /><testcase classname="src.mail_client_service.tests.test_get_client_dep" name="test_get_client_dep_success" time="0.001" /><testcase classname="src.mail_client_service.tests.test_get_client_dep" name="test_get_client_dep_failure" time="0.001" /><testcase classname="src.mail_client_service.tests.test_main_endpoints" name="test_list_and_detail_endpoints" time="0.007" /><testcase classname="src.mail_client_service.tests.test_main_endpoints" name="test_endpoints_error_paths" time="0.003" /><testcase classname="src.mail_client_service.tests.test_main_routes_unit" name="test_list_messages_success" time="0.000" /><testcase classname="src.mail_client_service.tests.test_main_routes_unit" name="test_list_messages_failure" time="0.000" /><testcase classname="src.mail_client_service.tests.test_main_routes_unit" name="test_get_message_success" time="0.000" /><testcase classname="src.mail_client_service.tests.test_main_routes_unit" name="test_get_message_not_found" time="0.000" /><testcase classname="src.mail_client_service.tests.test_main_routes_unit" name="test_mark_as_read_failure" time="0.000" /><testcase classname="src.mail_client_service.tests.test_main_routes_unit" name="test_delete_message_failure" time="0.000" /><testcase classname="src.mail_client_service.tests.test_models_serialization" name="test_message_summary_aliases" time="0.000" /><testcase classname="src.mail_client_service.tests.test_models_serialization" name="test_message_detail_roundtrip" time="0.000" /><testcase classname="src.mail_client_service.tests.test_models_serialization" name="test_message_list_response_and_success_response" time="0.000" /><testcase classname="src.mail_client_service.tests.test_models_serialization" name="test_error_response_optional_detail" time="0.000" /><testcase classname="src.mail_client_service.tests.test_service" name="test_get_messages" time="0.000"><skipped type="pytest.skip" message="This test file has import issues. Use test_main_endpoints.py instead.">/Users/rachit/Documents/NYU Courses/open source/oss-taapp/src/mail_client_service/tests/test_service.py:71: This test file has import issues. Use test_main_endpoints.py instead.</skipped></testcase><testcase classname="src.mail_client_service.tests.test_service" name="test_get_single_message" time="0.000"><skipped type="pytest.skip" message="This test file has import issues. Use test_main_endpoints.py instead.">/Users/rachit/Documents/NYU Courses/open source/oss-taapp/src/mail_client_service/tests/test_service.py:83: This test file has import issues. Use test_main_endpoints.py instead.</skipped></testcase><testcase classname="src.mail_client_service.tests.test_service" name="test_mark_as_read" time="0.000"><skipped type="pytest.skip" message="This test file has import issues. Use test_main_endpoints.py instead.">/Users/rachit/Documents/NYU Courses/open source/oss-taapp/src/mail_client_service/tests/test_service.py:92: This test file has import issues. Use test_main_endpoints.py instead.</skipped></testcase><testcase classname="src.mail_client_service.tests.test_service" name="test_delete_message" time="0.000"><skipped type="pytest.skip" message="This test file has import issues. Use test_main_endpoints.py instead.">/Users/rachit/Documents/NYU Courses/open source/oss-taapp/src/mail_client_service/tests/test_service.py:102: This test file has import issues. Use test_main_endpoints.py instead.</skipped></testcase><testcase classname="src.openai_adapter.tests.test_adapter" name="test_create_conversation_success" time="0.014" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_compose_response_api_error_unauthorized" time="0.014" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_get_conversation_success" time="0.013" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_delete_conversation_success" time="0.013" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_delete_conversation_default_true_when_no_body" time="0.013" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_create_conversation_api_error" time="0.014" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_get_conversation_api_error" time="0.014" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_delete_conversation_api_error" time="0.014" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_health_check_true_on_ok_status" time="0.014" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_health_check_http_error_returns_false" time="0.014" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_health_check_non_2xx_returns_false" time="0.013" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_health_check_invalid_json_fallback" time="0.014" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_constructor_allows_testserver_without_fastapi" time="0.000" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_init_raises_on_empty_base_url" time="0.000" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_init_allows_empty_session_id" time="0.013" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_constructor_uses_asgi_transport_when_testserver" time="0.000" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_compose_response_network_error_raises" time="0.013" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_compose_response_success" time="0.014" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_create_conversation_network_error_raises" time="0.013" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_get_conversation_network_error_raises" time="0.013" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_delete_conversation_network_error_raises" time="0.014" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_generate_response_success" time="0.014" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_generate_response_with_schema" time="0.013" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_generate_response_api_error" time="0.014" /><testcase classname="src.openai_adapter.tests.test_adapter" name="test_generate_response_network_error" time="0.014" /><testcase classname="src.openai_client_impl.tests.test_ai_client_impl" name="test_compose_response_creates_conversation_and_saves" time="0.001" /><testcase classname="src.openai_client_impl.tests.test_ai_client_impl" name="test_compose_response_appends_existing_conversation" time="0.001" /><testcase classname="src.openai_client_impl.tests.test_ai_client_impl" name="test_compose_response_requires_messages" time="0.000" /><testcase classname="src.openai_client_impl.tests.test_ai_client_impl" name="test_compose_response_propagates_api_errors" time="0.000" /><testcase classname="src.openai_client_impl.tests.test_ai_client_impl" name="test_create_conversation_handles_storage_failure" time="0.000" /><testcase classname="src.openai_client_impl.tests.test_ai_client_impl" name="test_get_conversation_success" time="0.000" /><testcase classname="src.openai_client_impl.tests.test_ai_client_impl" name="test_get_conversation_missing" time="0.000" /><testcase classname="src.openai_client_impl.tests.test_ai_client_impl" name="test_get_conversation_invalid_payload" time="0.000" /><testcase classname="src.openai_client_impl.tests.test_ai_client_impl" name="test_delete_conversation_success" time="0.000" /><testcase classname="src.openai_client_impl.tests.test_ai_client_impl" name="test_delete_conversation_missing" time="0.000" /><testcase classname="src.openai_client_impl.tests.test_ai_client_impl" name="test_missing_openai_key_raises" time="0.000" /><testcase classname="src.openai_client_impl.tests.test_response" name="test_response_properties" time="0.000" /><testcase classname="src.openai_client_impl.tests.test_response" name="test_get_response_factory" time="0.000" /><testcase classname="src.openai_client_impl.tests.test_response" name="test_conversation_properties" time="0.000" /><testcase classname="src.openai_client_impl.tests.test_response" name="test_get_conversation_factory" time="0.000" /><testcase classname="src.openai_client_service.tests.test_ai_routes" name="test_compose_response_success" time="0.003" /><testcase classname="src.openai_client_service.tests.test_ai_routes" name="test_compose_response_handles_missing_key" time="0.002" /><testcase classname="src.openai_client_service.tests.test_ai_routes" name="test_compose_response_handles_value_error" time="0.002" /><testcase classname="src.openai_client_service.tests.test_ai_routes" name="test_create_conversation_success" time="0.002" /><testcase classname="src.openai_client_service.tests.test_ai_routes" name="test_get_conversation_success" time="0.002" /><testcase classname="src.openai_client_service.tests.test_ai_routes" name="test_delete_conversation_success" time="0.002" /><testcase classname="src.openai_client_service.tests.test_ai_routes" name="test_generate_response_success" time="0.000"><failure message="AttributeError: 'module' object at openai_client_service.src has no attribute 'src'">obj = &lt;module 'openai_client_service'&gt;, name = 'src'
+ann = 'openai_client_service.src'
+
+    def annotated_getattr(obj: object, name: str, ann: str) -&gt; object:
+        try:
+&gt;           obj = getattr(obj, name)
+                  ^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'openai_client_service' has no attribute 'src'
+
+.venv/lib/python3.11/site-packages/_pytest/monkeypatch.py:90: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x127680ad0&gt;
+
+    @pytest.mark.unit
+    def test_generate_response_success(monkeypatch: pytest.MonkeyPatch) -&gt; None:
+        """POST /ai/generate_response should succeed with valid payload and API key."""
+        # Mock OpenAI client
+        class MockMessage:
+            def __init__(self) -&gt; None:
+                self.content = "Hello! How can I help you?"
+    
+        class MockChoice:
+            def __init__(self) -&gt; None:
+                self.message = MockMessage()
+    
+        class MockCompletion:
+            def __init__(self) -&gt; None:
+                self.choices = [MockChoice()]
+    
+        class MockCompletions:
+            @staticmethod
+            def create(**_kwargs: Any) -&gt; MockCompletion:
+                return MockCompletion()
+    
+        class MockChat:
+            def __init__(self) -&gt; None:
+                self.completions = MockCompletions()
+    
+        class MockOpenAI:
+            def __init__(self, **_kwargs: Any) -&gt; None:
+                self.chat = MockChat()
+    
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+&gt;       monkeypatch.setattr("openai_client_service.src.openai_client_service.ai_interface_impl.OpenAI", MockOpenAI)
+
+src/openai_client_service/tests/test_ai_routes.py:223: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/_pytest/monkeypatch.py:102: in derive_importpath
+    target = resolve(module)
+             ^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/_pytest/monkeypatch.py:84: in resolve
+    found = annotated_getattr(found, part, used)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+obj = &lt;module 'openai_client_service'&gt;, name = 'src'
+ann = 'openai_client_service.src'
+
+    def annotated_getattr(obj: object, name: str, ann: str) -&gt; object:
+        try:
+            obj = getattr(obj, name)
+        except AttributeError as e:
+&gt;           raise AttributeError(
+                f"{type(obj).__name__!r} object at {ann} has no attribute {name!r}"
+            ) from e
+E           AttributeError: 'module' object at openai_client_service.src has no attribute 'src'
+
+.venv/lib/python3.11/site-packages/_pytest/monkeypatch.py:92: AttributeError</failure></testcase><testcase classname="src.openai_client_service.tests.test_ai_routes" name="test_generate_response_with_schema" time="0.000"><failure message="AttributeError: 'module' object at openai_client_service.src has no attribute 'src'">obj = &lt;module 'openai_client_service'&gt;, name = 'src'
+ann = 'openai_client_service.src'
+
+    def annotated_getattr(obj: object, name: str, ann: str) -&gt; object:
+        try:
+&gt;           obj = getattr(obj, name)
+                  ^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'openai_client_service' has no attribute 'src'
+
+.venv/lib/python3.11/site-packages/_pytest/monkeypatch.py:90: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x12729c550&gt;
+
+    @pytest.mark.unit
+    def test_generate_response_with_schema(monkeypatch: pytest.MonkeyPatch) -&gt; None:
+        """POST /ai/generate_response should return structured JSON when schema is provided."""
+        # Mock OpenAI client with JSON response
+        class MockMessage:
+            def __init__(self) -&gt; None:
+                self.content = '{"action": "greet", "message": "Hello!"}'
+    
+        class MockChoice:
+            def __init__(self) -&gt; None:
+                self.message = MockMessage()
+    
+        class MockCompletion:
+            def __init__(self) -&gt; None:
+                self.choices = [MockChoice()]
+    
+        class MockCompletions:
+            @staticmethod
+            def create(**_kwargs: Any) -&gt; MockCompletion:
+                return MockCompletion()
+    
+        class MockChat:
+            def __init__(self) -&gt; None:
+                self.completions = MockCompletions()
+    
+        class MockOpenAI:
+            def __init__(self, **_kwargs: Any) -&gt; None:
+                self.chat = MockChat()
+    
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+&gt;       monkeypatch.setattr("openai_client_service.src.openai_client_service.ai_interface_impl.OpenAI", MockOpenAI)
+
+src/openai_client_service/tests/test_ai_routes.py:265: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/_pytest/monkeypatch.py:102: in derive_importpath
+    target = resolve(module)
+             ^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/_pytest/monkeypatch.py:84: in resolve
+    found = annotated_getattr(found, part, used)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+obj = &lt;module 'openai_client_service'&gt;, name = 'src'
+ann = 'openai_client_service.src'
+
+    def annotated_getattr(obj: object, name: str, ann: str) -&gt; object:
+        try:
+            obj = getattr(obj, name)
+        except AttributeError as e:
+&gt;           raise AttributeError(
+                f"{type(obj).__name__!r} object at {ann} has no attribute {name!r}"
+            ) from e
+E           AttributeError: 'module' object at openai_client_service.src has no attribute 'src'
+
+.venv/lib/python3.11/site-packages/_pytest/monkeypatch.py:92: AttributeError</failure></testcase><testcase classname="src.openai_client_service.tests.test_ai_routes" name="test_generate_response_missing_api_key" time="0.002" /><testcase classname="src.openai_client_service.tests.test_ai_routes" name="test_generate_response_handles_api_error" time="0.000"><failure message="AttributeError: 'module' object at openai_client_service.src has no attribute 'src'">obj = &lt;module 'openai_client_service'&gt;, name = 'src'
+ann = 'openai_client_service.src'
+
+    def annotated_getattr(obj: object, name: str, ann: str) -&gt; object:
+        try:
+&gt;           obj = getattr(obj, name)
+                  ^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'openai_client_service' has no attribute 'src'
+
+.venv/lib/python3.11/site-packages/_pytest/monkeypatch.py:90: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x1276a67d0&gt;
+
+    @pytest.mark.unit
+    def test_generate_response_handles_api_error(monkeypatch: pytest.MonkeyPatch) -&gt; None:
+        """POST /ai/generate_response should handle OpenAI API errors."""
+        class MockCompletions:
+            @staticmethod
+            def create(**_kwargs: Any) -&gt; None:
+                error_msg = "API rate limit exceeded"
+                raise ValueError(error_msg)
+    
+        class MockChat:
+            def __init__(self) -&gt; None:
+                self.completions = MockCompletions()
+    
+        class MockOpenAI:
+            def __init__(self, **_kwargs: Any) -&gt; None:
+                self.chat = MockChat()
+    
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+&gt;       monkeypatch.setattr("openai_client_service.src.openai_client_service.ai_interface_impl.OpenAI", MockOpenAI)
+
+src/openai_client_service/tests/test_ai_routes.py:321: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.11/site-packages/_pytest/monkeypatch.py:102: in derive_importpath
+    target = resolve(module)
+             ^^^^^^^^^^^^^^^
+.venv/lib/python3.11/site-packages/_pytest/monkeypatch.py:84: in resolve
+    found = annotated_getattr(found, part, used)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+obj = &lt;module 'openai_client_service'&gt;, name = 'src'
+ann = 'openai_client_service.src'
+
+    def annotated_getattr(obj: object, name: str, ann: str) -&gt; object:
+        try:
+            obj = getattr(obj, name)
+        except AttributeError as e:
+&gt;           raise AttributeError(
+                f"{type(obj).__name__!r} object at {ann} has no attribute {name!r}"
+            ) from e
+E           AttributeError: 'module' object at openai_client_service.src has no attribute 'src'
+
+.venv/lib/python3.11/site-packages/_pytest/monkeypatch.py:92: AttributeError</failure></testcase><testcase classname="src.openai_client_service.tests.test_dependencies" name="test_get_subject_success" time="0.000"><failure message="Failed: async def functions are not natively supported.&#10;You need to install a suitable plugin for your async framework, for example:&#10;  - anyio&#10;  - pytest-asyncio&#10;  - pytest-tornasync&#10;  - pytest-trio&#10;  - pytest-twisted">async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted</failure></testcase><testcase classname="src.openai_client_service.tests.test_dependencies" name="test_get_subject_missing_header" time="0.000"><failure message="Failed: async def functions are not natively supported.&#10;You need to install a suitable plugin for your async framework, for example:&#10;  - anyio&#10;  - pytest-asyncio&#10;  - pytest-tornasync&#10;  - pytest-trio&#10;  - pytest-twisted">async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted</failure></testcase><testcase classname="src.openai_client_service.tests.test_dependencies" name="test_session_lifecycle" time="0.000"><failure message="Failed: async def functions are not natively supported.&#10;You need to install a suitable plugin for your async framework, for example:&#10;  - anyio&#10;  - pytest-asyncio&#10;  - pytest-tornasync&#10;  - pytest-trio&#10;  - pytest-twisted">async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted</failure></testcase><testcase classname="src.openai_client_service.tests.test_dependencies" name="test_get_ai_client_uses_subject" time="0.000"><failure message="Failed: async def functions are not natively supported.&#10;You need to install a suitable plugin for your async framework, for example:&#10;  - anyio&#10;  - pytest-asyncio&#10;  - pytest-tornasync&#10;  - pytest-trio&#10;  - pytest-twisted">async def functions are not natively supported.
+You need to install a suitable plugin for your async framework, for example:
+  - anyio
+  - pytest-asyncio
+  - pytest-tornasync
+  - pytest-trio
+  - pytest-twisted</failure></testcase><testcase classname="src.openai_client_service.tests.test_oauth_routes" name="test_oauth_login_sets_cookie_and_redirect" time="0.002" /><testcase classname="src.openai_client_service.tests.test_oauth_routes" name="test_oauth_callback_creates_session" time="0.003" /><testcase classname="src.openai_client_service.tests.test_oauth_routes" name="test_set_openai_key_endpoint" time="0.002" /><testcase classname="src.openai_client_service.tests.test_oauth_routes" name="test_logout_clears_session" time="0.002" /><testcase classname="src.openai_client_service.tests.test_oauth_routes" name="test_whoami_returns_subject" time="0.002" /></testsuite></testsuites>

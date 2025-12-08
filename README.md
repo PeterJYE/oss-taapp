@@ -59,7 +59,7 @@ docker run -p 8000:8000 openai-client-service
 - `POST /auth/set-openai-key` - Store OpenAI API key for a user
 
 ### AI Operations
-- `POST /ai/generate-response` - Generate AI response
+- `POST /ai/generate_response` - Generate AI response
 - `POST /ai/conversations` - Create new conversation
 - `GET /ai/conversations/{conversation_id}` - Get conversation
 - `DELETE /ai/conversations/{conversation_id}` - Delete conversation
@@ -92,7 +92,7 @@ curl -X POST http://localhost:8000/ai/conversations \
 
 ### 4. Generate Response
 ```bash
-curl -X POST http://localhost:8000/ai/generate-response \
+curl -X POST http://localhost:8000/ai/generate_response \
   -H "Content-Type: application/json" \
   --cookie "session_id=YOUR_SESSION_ID" \
   -d '{
