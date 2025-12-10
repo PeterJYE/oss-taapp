@@ -4,9 +4,7 @@ version = "0.1.0"
 description = "Template repository for an OpenAI client"
 readme = "../../README.md"
 requires-python = ">=3.11"
-dependencies = [
-    "pytest-cov>=7.0.0",
-]
+dependencies = []
 
 [project.optional-dependencies]
 dev = [
@@ -51,6 +49,7 @@ ignore = [
   "D203",  # 'incorrect-blank-line-before-class' (D203) and 'no-blank-line-before-class' (D211) are conflicting
   "D213",  # 'multi-line-summary-first-line' (D212) and 'multi-line-summary-second-line' (D213) are conflicting
   "COM812",  # Trailing comma - conflicts with formatter behavior
+  "S101",  # Use of assert detected (allowed in test files)
 ]
 [tool.ruff.lint.per-file-ignores]
 "**/test_*.py" = ["ALL"]
@@ -97,9 +96,9 @@ module = ["generated_client.*", "mail_client_service_client.*", "ticket_api.*", 
 ignore_errors = true
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "src/*/tests"]
+testpaths = ["tests", "src/*/tests", "src/ticket_api/src/ticket_api/ticket_impl/tests", "src/chat_api/src/chat_api/chat_adapter/tests/test_adapter_final_coverage.py"]
 addopts = ["--cov", "--cov-report=term-missing", "--import-mode=importlib"]
-norecursedirs = ["src/chat_api", "src/ticket_api"]
+norecursedirs = ["src/chat_api"]
 markers = [
     "unit: marks tests as unit tests (fast, isolated)",
     "integration: marks tests as integration tests (medium speed, real dependencies)",

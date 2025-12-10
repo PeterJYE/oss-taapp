@@ -52,16 +52,119 @@ async def test_create_get_list_transition_comment_delete(seed_token: None) -> No
             },
         }
 
-    # SINGLE GET route with THREE sequential responses:
-    # 1) after create_ticket()  2) explicit get_ticket()  3) after transition_status()
+    # SINGLE GET route with FOUR sequential responses:
+    # 1) after create_ticket()  2) explicit get_ticket()  3) after transition (in update_ticket)  4) after transition (return)
     route_issue = respx.get(f"{BASE}/issue/OSDP-101")
     route_issue.mock(
         side_effect=[
             httpx.Response(200, json=issue_payload()),  # 1) after create_ticket()
             httpx.Response(200, json=issue_payload()),  # 2) get_ticket() in the test
-            httpx.Response(200, json=issue_payload(status="In Progress", priority="High")),  # 3) after transition
+            httpx.Response(200, json=issue_payload(status="In Progress", priority="High")),  # 3) after transition (in update_ticket)
+            httpx.Response(200, json=issue_payload(status="In Progress", priority="High")),  # 4) after transition (return)
         ],
     )
+
+    # Mock priority update (needed when priority != MEDIUM)
+    respx.put(f"{BASE}/issue/OSDP-101").mock(return_value=httpx.Response(204))
+    
+    # Mock priority update (needed when priority != MEDIUM, happens after create)
+    respx.put(f"{BASE}/issue/OSDP-101").mock(return_value=httpx.Response(204))
+    
+    # Mock transitions for status update
+    respx.get(f"{BASE}/issue/OSDP-101/transitions").mock(
+        return_value=httpx.Response(200, json={"transitions": [{"id": "1", "name": "In Progress"}]}),
+    )
+    respx.post(f"{BASE}/issue/OSDP-101/transitions").mock(return_value=httpx.Response(204))
+
+    # Mock list/search endpoint
+    respx.post(f"{BASE}/search/jql").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "issues": [
+                    {
+                        "key": "OSDP-101",
+                        "fields": {
+                            "summary": "Hello HW2",
+                            "status": {"name": "Open"},
+                            "priority": {"name": "High"},
+                            "description": "Created from impl",
+                            "assignee": {"displayName": "Terra"},
+                            "reporter": {"displayName": "Terra"},
+                        },
+                    },
+                ],
+            },
+        ),
+    )
+
+    # Mock comments endpoints
+    respx.post(f"{BASE}/issue/OSDP-101/comment").mock(
+        return_value=httpx.Response(
+            201,
+            json={
+                "id": "comment-1",
+                "body": {"type": "doc", "version": 1, "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Test comment"}]}]},
+                "author": {"displayName": "Terra"},
+            },
+        ),
+    )
+    respx.get(f"{BASE}/issue/OSDP-101/comment").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "comments": [
+                    {
+                        "id": "comment-1",
+                        "body": {"type": "doc", "version": 1, "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Test comment"}]}]},
+                        "author": {"displayName": "Terra"},
+                    },
+                ],
+            },
+        ),
+    )
+
+    # Mock delete endpoint
+    respx.delete(f"{BASE}/issue/OSDP-101").mock(return_value=httpx.Response(204))
+
+    # Now actually run the test
+    svc = TicketImpl(user_id="u1", project_key="OSDP")
+
+    # CREATE
+    ticket = await svc.create_ticket(
+        title="Hello HW2",
+        description="Created from impl",
+        reporter="terra@example.com",
+        priority=TicketPriority.HIGH,
+        assignee="terra@example.com",
+    )
+    assert ticket.title == "Hello HW2"
+    assert ticket.priority == TicketPriority.HIGH
+
+    # GET
+    ticket_id = ticket.id
+    ticket = await svc.get_ticket(ticket_id)
+    assert ticket.title == "Hello HW2"
+
+    # LIST
+    tickets = await svc.list_tickets()
+    assert len(tickets) >= 1
+
+    # TRANSITION STATUS
+    ticket = await svc.transition_status(ticket_id, TicketStatus.IN_PROGRESS)
+    assert ticket.status == TicketStatus.IN_PROGRESS
+
+    # ADD COMMENT
+    comment = await svc.add_comment(ticket_id, "terra@example.com", "Test comment")
+    assert comment.content == "Test comment"
+
+    # GET COMMENTS
+    comments = await svc.get_ticket_comments(ticket_id)
+    assert len(comments) >= 1
+
+    # DELETE
+    result = await svc.delete_ticket(ticket_id)
+    assert result is True
 
 
 @pytest.mark.asyncio
@@ -364,6 +467,7 @@ async def test_get_ticket_comments_empty(seed_token: None) -> None:
 async def test_create_ticket_with_all_priorities(seed_token: None) -> None:
     """Test creating tickets with different priority levels."""
     respx.get(f"{BASE}/user/search").mock(return_value=httpx.Response(200, json=[]))
+    respx.get(f"{BASE}/myself").mock(return_value=httpx.Response(200, json={"accountId": "current-user-id"}))
     respx.post(f"{BASE}/issue").mock(return_value=httpx.Response(201, json={"id": "10001", "key": "OSDP-101"}))
     respx.put(f"{BASE}/issue/OSDP-101").mock(return_value=httpx.Response(204))
 
@@ -519,6 +623,7 @@ async def test_create_ticket_reporter_lookup_fails(seed_token: None) -> None:
     respx.get(re.compile(f"{re.escape(BASE)}/user/search\\?.*")).mock(
         return_value=httpx.Response(200, json=[]),  # No users found
     )
+    respx.get(f"{BASE}/myself").mock(return_value=httpx.Response(200, json={"accountId": "current-user-id"}))
     respx.post(f"{BASE}/issue").mock(
         return_value=httpx.Response(201, json={"id": "10001", "key": "OSDP-101"}),
     )

@@ -25,7 +25,7 @@ packages = ["src/ticket_service"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-extend = "../../../pyproject.toml"
+extend = "../../../../../pyproject.toml"
 
 [tool.ruff.lint]
 ignore = ["D100", "D104"]  # Ignore missing docstrings for now

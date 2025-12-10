@@ -5,8 +5,7 @@ from uuid import uuid4
 
 import pytest
 
-from ticket_api import Ticket, TicketStatus
-from ticket_api.ticket_impl.models import Comment, TicketPriority
+from ticket_api.ticket_impl.models import Comment, Ticket, TicketPriority
 
 # Constants for boundary values
 MAX_TITLE_LENGTH = 200

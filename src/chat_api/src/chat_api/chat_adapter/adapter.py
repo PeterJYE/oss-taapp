@@ -72,7 +72,8 @@ class ChatAdapter(ChatInterface):
             channel_id: The channel ID to send the message to
             content: The message content/text
 
-        Returns:
+        Returns
+        -------
             True if the message was sent successfully, False otherwise
 
         """
@@ -91,7 +92,8 @@ class ChatAdapter(ChatInterface):
             channel_id: The channel ID to read messages from
             limit: Maximum number of messages to retrieve (default: 10)
 
-        Returns:
+        Returns
+        -------
             List of Message objects implementing the shared Message ABC
 
         """
@@ -109,7 +111,8 @@ class ChatAdapter(ChatInterface):
             channel_id: The channel ID where the message exists
             message_id: The message ID (or timestamp) to delete
 
-        Returns:
+        Returns
+        -------
             True if the message was deleted successfully, False otherwise
 
         """

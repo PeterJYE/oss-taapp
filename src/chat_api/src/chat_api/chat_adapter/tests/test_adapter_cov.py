@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+
 from slack_adapter import (
     ServiceAdapter,
     ServiceBackedClient,

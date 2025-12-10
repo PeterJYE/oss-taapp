@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+
 from slack_adapter import ServiceAdapter, _get_id  # type: ignore[import]
 from slack_api import Channel, Message  # runtime construction only
 
@@ -10,7 +11,7 @@ from slack_api import Channel, Message  # runtime construction only
 class OnlyGetPostHTTP:
     """HTTP stub that supports only GET and POST."""
 
-    def __init__(self) -> None:  # noqa: D107
+    def __init__(self) -> None:
         self.closed = False
 
     def get(self, url: str, **_kwargs: object) -> object:

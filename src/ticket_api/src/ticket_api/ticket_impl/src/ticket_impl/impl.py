@@ -9,10 +9,12 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 # Import internal APIs from parent ticket_impl folder
 import sys
 from pathlib import Path
+
 _parent = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(_parent))
 
-from ticket_api.ticket_impl.interface import TicketServiceAPI  # type: ignore[import-untyped]
+# ruff: noqa: E402  # Module level import not at top of file (needed for sys.path manipulation)
+from ticket_api.ticket_impl.interface import TicketServiceAPI  # typeqa: ignore[import-untyped]
 from ticket_api.ticket_impl.models import (  # type: ignore[import-untyped]
     Comment,
     Ticket,

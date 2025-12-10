@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import ClassVar
 
 import pytest
+
 from slack_adapter import SlackServiceBackedClient
 
 

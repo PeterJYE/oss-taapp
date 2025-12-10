@@ -12,6 +12,7 @@ import httpx
 import pytest
 from httpx import ASGITransport as _ASGITransport
 from httpx import BaseTransport, Request, Response
+
 from slack_adapter import SlackServiceBackedClient
 
 # Import FastAPI app in-process so tests run without a real server.

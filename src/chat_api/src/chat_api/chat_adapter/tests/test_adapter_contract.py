@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+
 from slack_adapter import SlackServiceBackedClient
 
 if TYPE_CHECKING:  # satisfy TC001: keep app imports type-only
