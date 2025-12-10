@@ -3,8 +3,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-
-from gmail_client_impl.gmail_impl import GmailClient
+from gmail_client_impl import GmailClient
 from gmail_client_impl.message_impl import GmailMessage
 
 
@@ -24,7 +23,7 @@ def mock_service() -> MagicMock:
 def test_init_with_service(mock_service: MagicMock) -> None:
     """Ensure GmailClient uses provided service and skips auth."""
     client = GmailClient(service=mock_service)
-    assert client.service == mock_service  # noqa: SLF001
+    assert client.service == mock_service
 
 
 def test_interactive_auth(
@@ -36,9 +35,9 @@ def test_interactive_auth(
 
     monkeypatch.setattr(GmailClient, "TOKEN_PATH", str(tmp_path / "token.json"))
 
-    monkeypatch.setattr(GmailClient, "_run_interactive_flow", lambda _self, _p: mock_creds)  # noqa: SLF001
+    monkeypatch.setattr(GmailClient, "_run_interactive_flow", lambda _self, _p: mock_creds)
 
-    monkeypatch.setattr(GmailClient, "_save_token", lambda _self, _c, _p: None)  # noqa: SLF001
+    monkeypatch.setattr(GmailClient, "_save_token", lambda _self, _c, _p: None)
 
     from gmail_client_impl import gmail_impl  # noqa: PLC0415
 

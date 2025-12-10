@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from openai_client_impl import MissingOpenAIKeyError  # type: ignore[attr-defined]
 from openai_client_service.src.openai_client_service.ai_interface_impl import EnvAIImplementation
 from openai_client_service.src.openai_client_service.dependencies import get_ai_client
-from openai_service_api.src.openai_service_api.client import AIClient
+from openai_service_api import AIClient
 
 router = APIRouter()
 
@@ -195,7 +195,7 @@ def generate_response(request: GenerateResponseRequest) -> dict[str, Any] | str:
     """
     try:
         ai_impl = EnvAIImplementation()
-        return ai_impl.generate_response(
+        result: str | dict[str, Any] = ai_impl.generate_response(
             user_input=request.user_input,
             system_prompt=request.system_prompt,
             response_schema=request.response_schema,
@@ -204,3 +204,5 @@ def generate_response(request: GenerateResponseRequest) -> dict[str, Any] | str:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except RuntimeError as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
+    else:
+        return result

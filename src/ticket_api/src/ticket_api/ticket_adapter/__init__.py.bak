@@ -1,0 +1,12 @@
+"""Shared interface for ticket operations."""
+
+from .shared_interface import Ticket, TicketInterface, TicketStatus
+from .adapter import StandardizedTicketAdapter
+
+__all__ = [
+    "TicketInterface",
+    "Ticket",
+    "TicketStatus",
+    "StandardizedTicketAdapter",
+]
+

@@ -1,9 +1,11 @@
 """Response and Conversation implementations for OpenAI client."""
 
-from openai_service_api.src.openai_service_api.response import (
+from openai_service_api import (
     Conversation as ConversationABC,
 )
-from openai_service_api.src.openai_service_api.response import Response as ResponseABC
+from openai_service_api import (
+    Response as ResponseABC,
+)
 
 
 class Response(ResponseABC):

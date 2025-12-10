@@ -1,11 +1,15 @@
 """Core AI service contract definitions."""
 
-from abc import ABC, abstractmethod
+from __future__ import annotations
 
-from openai_service_api.src.openai_service_api.response import (
-    Conversation,
-    Response,
-)
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .response import (
+        Conversation,
+        Response,
+    )
 
 
 class AIClient(ABC):

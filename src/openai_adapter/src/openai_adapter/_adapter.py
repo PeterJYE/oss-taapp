@@ -20,6 +20,26 @@ from urllib.parse import urlparse
 
 import httpx
 
+# Try to import AIInterface, but make it optional
+try:
+    from ai_api import AIInterface  # type: ignore[attr-defined]
+except ImportError:
+    # If ai_api is not available, define a stub for type checking
+    from abc import ABC, abstractmethod
+
+    class AIInterface(ABC):  # type: ignore[no-redef]
+        """Stub AIInterface if ai_api is not available."""
+
+        @abstractmethod
+        def generate_response(
+            self,
+            user_input: str,
+            system_prompt: str,
+            response_schema: dict[str, Any] | None = None,
+        ) -> str | dict[str, Any]:
+            """Generate a response from the AI."""
+            raise NotImplementedError
+
 HTTP_OK = 200
 HTTP_BAD = 400
 
@@ -227,3 +247,61 @@ class OpenAIServiceAdapter:
             if status_str == "ok":
                 return True
         return False
+
+
+class AIAdapter(AIInterface):
+    """Adapter that implements AIInterface using OpenAIServiceAdapter.
+
+    This adapter wraps the OpenAIServiceAdapter and exposes only
+    the methods defined in the shared AIInterface.
+    """
+
+    def __init__(
+        self,
+        service_adapter: OpenAIServiceAdapter | None = None,
+        *,
+        base_url: str = "",
+        session_id: str | None = None,
+        timeout: float = 5.0,
+    ) -> None:
+        """Initialize the adapter with an OpenAIServiceAdapter instance.
+
+        Args:
+            service_adapter: The OpenAIServiceAdapter to wrap. If None, creates a new instance.
+            base_url: The base URL of the OpenAI Client Service (required if service_adapter is None)
+            session_id: Optional session ID cookie value (not needed for generate_response)
+            timeout: Request timeout in seconds
+
+        """
+        if service_adapter is not None:
+            self._adapter = service_adapter
+        else:
+            if not base_url:
+                msg = "base_url is required when service_adapter is None"
+                raise ValueError(msg)
+            self._adapter = OpenAIServiceAdapter(base_url=base_url, session_id=session_id, timeout=timeout)
+
+    def generate_response(
+        self,
+        user_input: str,
+        system_prompt: str,
+        response_schema: dict[str, Any] | None = None,
+    ) -> str | dict[str, Any]:
+        """Generate a response from the AI.
+
+        Args:
+            user_input: The text provided by the chat user.
+            system_prompt: The instruction set (e.g., "You are a helpful assistant...").
+            response_schema: An optional JSON schema (dict).
+                            If provided, the AI must return a structured Dict matching
+                            this schema. If None, the AI returns a conversational String.
+
+        Returns:
+            A string (conversation) or a Dict (structured action data).
+
+        """
+        return self._adapter.generate_response(
+            user_input=user_input,
+            system_prompt=system_prompt,
+            response_schema=response_schema,
+        )

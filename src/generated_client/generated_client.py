@@ -49,4 +49,4 @@ _alias_package_modules("mail_client_service_client", __name__ + ".mail_client_se
 _alias_package_modules("mail_client_service_client.api", __name__ + ".mail_client_service_client.api")
 _alias_package_modules("mail_client_service_client.models", __name__ + ".mail_client_service_client.models")
 
-__all__ = ["Client", "mail_client_service_client", "api", "models"]
+__all__ = ["Client", "api", "mail_client_service_client", "models"]

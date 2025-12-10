@@ -42,6 +42,7 @@ def test_generated_client_client_and_api_asgi():
     import urllib.parse
 
     from fastapi.testclient import TestClient as FastAPITestClient
+
     from generated_client.mail_client_service_client.api.default import (
         delete_message_messages_message_id_delete as delete_mod,
     )

@@ -4,6 +4,7 @@ import base64
 import email
 import email.header
 import email.utils
+import importlib
 from email.message import Message as EmailMessage
 from typing import TYPE_CHECKING
 
@@ -220,12 +221,10 @@ def register() -> None:
     # create a new module object. Set the symbol on the module object that is
     # currently importable as `mail_client_api.message` so registration works
     # even after reloads done by tests.
-    import importlib
-
     try:
         module = importlib.import_module("mail_client_api.message")
-        setattr(module, "get_message", get_message_impl)
-    except Exception:
+        module.get_message = get_message_impl  # type: ignore[attr-defined]
+    except (ImportError, AttributeError):
         # Fallback: update the module object this file imported earlier
         message_module.get_message = get_message_impl  # type: ignore[attr-defined]
 
