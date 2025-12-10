@@ -1939,9 +1939,6 @@ wheels = [
 name = "ta-assignment"
 version = "0.1.0"
 source = { virtual = "." }
-dependencies = [
-    { name = "pytest-cov" },
-]
 
 [package.optional-dependencies]
 dev = [
@@ -1966,7 +1963,6 @@ requires-dist = [
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.17.0" },
     { name = "pymdown-extensions", marker = "extra == 'dev'", specifier = ">=10.16.1" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.1" },
-    { name = "pytest-cov", specifier = ">=7.0.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.2.1" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.12.7" },
     { name = "types-requests", marker = "extra == 'dev'", specifier = ">=2.32.4.20250611" },

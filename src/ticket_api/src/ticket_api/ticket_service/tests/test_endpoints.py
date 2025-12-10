@@ -8,8 +8,8 @@ from uuid import uuid4
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from ticket_api import Ticket, TicketStatus
-from ticket_api.ticket_impl.models import Comment, TicketPriority
+from ticket_api import TicketStatus
+from ticket_api.ticket_impl.models import Comment, Ticket, TicketPriority
 
 # Test constants
 EXPECTED_TICKETS_COUNT = 2

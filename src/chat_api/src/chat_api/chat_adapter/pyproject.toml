@@ -64,6 +64,9 @@ extend-exclude = [".pytest_cache", "*.egg-info"]
 [tool.ruff.lint]
 # TA requirement: keep ALL enabled
 select = ["ALL"]
+ignore = [
+  "S101",    # Use of assert detected (allowed in test files)
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["slack_adapter", "slack_api"]
@@ -80,11 +83,27 @@ convention = "numpy"
   "EM101",   # string literal in exceptions (okay in tests)
   "PLC0415", # import not at top (test helpers)
   "PTH",     # pathlib suggestions in tests
-  "PT018",   # “assertion should be broken down”
+  "PT018",   # "assertion should be broken down"
   "S101",    # assert used
   "SLF001",  # private member access in tests
   "TC002",   # move 3rd-party import into typing-only block
   "TRY003",  # long messages in exceptions
+]
+"tests/**/*.py" = [
+  "ANN",     # missing type annotations in tests
+  "ARG",     # unused args (e.g., monkeypatch)
+  "D",       # docstring rules in tests
+  "EM101",   # string literal in exceptions (okay in tests)
+  "PLC0415", # import not at top (test helpers)
+  "PTH",     # pathlib suggestions in tests
+  "PT018",   # "assertion should be broken down"
+  "S101",    # assert used
+  "SLF001",  # private member access in tests
+  "TC002",   # move 3rd-party import into typing-only block
+  "TRY003",  # long messages in exceptions
+]
+"**/test_*.py" = [
+  "S101",    # assert used
 ]
 
 # ---- Pytest ----

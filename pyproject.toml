@@ -54,6 +54,9 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "**/test_*.py" = ["ALL"]
 "**/tests/**/*.py" = ["ALL"]
+"src/chat_api/**/tests/**/*.py" = ["ALL"]
+"src/chat_api/**/test_*.py" = ["ALL"]
+"src/chat_api/src/chat_api/chat_adapter/tests/**/*.py" = ["ALL"]
 "src/generated_client/**/*.py" = ["ALL"]
 # Exclude existing team code in chat_api and ticket_api that wasn't checked before integration
 "src/chat_api/src/chat_api/chat_adapter/src/**/*.py" = ["ALL"]
@@ -99,6 +102,7 @@ ignore_errors = true
 testpaths = ["tests", "src/*/tests", "src/ticket_api/src/ticket_api/ticket_impl/tests", "src/chat_api/src/chat_api/chat_adapter/tests/test_adapter_final_coverage.py"]
 addopts = ["--cov", "--cov-report=term-missing", "--import-mode=importlib"]
 norecursedirs = ["src/chat_api"]
+asyncio_mode = "auto"
 markers = [
     "unit: marks tests as unit tests (fast, isolated)",
     "integration: marks tests as integration tests (medium speed, real dependencies)",
