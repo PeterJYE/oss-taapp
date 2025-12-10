@@ -84,7 +84,7 @@ def test_slack_service_backed_uses_injected_http_client() -> None:
     """SlackServiceBackedClient should use the injected HTTP-like client."""
     http = _HTTPClientLike()
     client = SlackServiceBackedClient(base_url="http://svc")
-    client._client = http  # noqa: SLF001
+    client._client = http
 
     assert client.health() is True
 

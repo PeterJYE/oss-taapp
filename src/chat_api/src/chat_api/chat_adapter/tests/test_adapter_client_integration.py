@@ -50,7 +50,7 @@ def test_health_endpoint() -> None:
     """Ensure adapter.health() delegates correctly to the generated client."""
     adapter = SlackServiceBackedClient()
     # Test-only injection of the generated client object.
-    adapter._client = DummyGeneratedClient()  # noqa: SLF001
+    adapter._client = DummyGeneratedClient()
 
     result = adapter.health()
     if result is not True:
@@ -82,7 +82,7 @@ def test_list_channels() -> None:
             return SmartHTTPXClient()
 
     adapter = SlackServiceBackedClient()
-    adapter._client = SmartClient()  # noqa: SLF001
+    adapter._client = SmartClient()
 
     channels = adapter.list_channels()
     if not isinstance(channels, list):
@@ -118,7 +118,7 @@ def test_post_message() -> None:
             return SmartHTTPXClient()
 
     adapter = SlackServiceBackedClient()
-    adapter._client = SmartClient()  # noqa: SLF001
+    adapter._client = SmartClient()
 
     message = adapter.post_message("C123", "Hello")
     if message.text != "Hello":
