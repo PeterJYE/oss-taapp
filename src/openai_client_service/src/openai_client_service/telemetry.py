@@ -1,7 +1,8 @@
 """Telemetry middleware for monitoring request latency, success, and failure rates."""
 
+import re
 import time
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 
 from fastapi import Request, Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
@@ -43,7 +44,7 @@ REQUEST_FAILURE = Counter(
 class TelemetryMiddleware(BaseHTTPMiddleware):
     """Middleware to collect telemetry data for all HTTP requests."""
 
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         """Process request and collect telemetry metrics."""
         # Record start time
         start_time = time.time()
@@ -56,6 +57,7 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # Process request
+        response: Response
         try:
             response = await call_next(request)
             status_code = response.status_code
@@ -100,8 +102,6 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
     @staticmethod
     def _normalize_endpoint(endpoint: str) -> str:
         """Normalize endpoint by replacing IDs and UUIDs with placeholders."""
-        import re
-
         # Replace UUIDs
         uuid_pattern = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
         endpoint = re.sub(uuid_pattern, "{id}", endpoint, flags=re.IGNORECASE)
