@@ -16,6 +16,7 @@ dependencies = [
   "openai-client-impl",
   "openai>=1.40.0",
   "ai-api",
+  "prometheus-client>=0.20.0",
 ]
 
 [tool.uv.sources]

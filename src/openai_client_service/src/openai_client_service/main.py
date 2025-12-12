@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from openai_client_impl import init_db  # type: ignore[attr-defined]
 
 from .routes import ai, oauth
+from .telemetry import TelemetryMiddleware, metrics_endpoint
 
 # Load .env from project root (4 levels up from this file)
 project_root = Path(__file__).parent.parent.parent.parent.parent.parent
@@ -23,6 +24,12 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
 )
+
+# Add telemetry middleware
+app.add_middleware(TelemetryMiddleware)
+
+# Add metrics endpoint
+app.get("/metrics")(metrics_endpoint)
 
 
 @app.on_event("startup")  # type: ignore[misc]
