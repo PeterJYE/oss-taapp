@@ -1,12 +1,16 @@
 """Telemetry middleware for monitoring request latency, success, and failure rates."""
 
 import time
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi import Request, Response
-from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response as StarletteResponse
+
+# HTTP status code constants
+HTTP_OK = 200
+HTTP_BAD_REQUEST = 400
 
 # Metrics definitions
 REQUEST_COUNT = Counter(
@@ -80,7 +84,7 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
             ).observe(latency)
 
             # Record success/failure
-            if 200 <= status_code < 400:
+            if HTTP_OK <= status_code < HTTP_BAD_REQUEST:
                 REQUEST_SUCCESS.labels(
                     method=request.method,
                     endpoint=normalized_endpoint,
@@ -103,12 +107,10 @@ class TelemetryMiddleware(BaseHTTPMiddleware):
         endpoint = re.sub(uuid_pattern, "{id}", endpoint, flags=re.IGNORECASE)
 
         # Replace numeric IDs
-        endpoint = re.sub(r"/\d+", "/{id}", endpoint)
-
-        return endpoint
+        return re.sub(r"/\d+", "/{id}", endpoint)
 
 
-def metrics_endpoint(request: Request) -> StarletteResponse:
+def metrics_endpoint(_request: Request) -> StarletteResponse:
     """Endpoint to expose Prometheus metrics."""
     return StarletteResponse(
         content=generate_latest(),
