@@ -18,6 +18,7 @@ Environment Variables:
     JIRA_REPORTER_EMAIL: Default reporter email for tickets
 """
 
+import logging
 import os
 import sys
 import time
@@ -30,6 +31,16 @@ from ai_api import AIInterface  # type: ignore[attr-defined]
 from chat_api import ChatAdapter, ChatInterface  # type: ignore[attr-defined]
 from openai_adapter import AIAdapter  # type: ignore[attr-defined]
 from ticket_api import StandardizedTicketAdapter, TicketInterface, TicketStatus  # type: ignore[attr-defined]
+
+# Configure logging
+log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(
+    level=getattr(logging, log_level, logging.INFO),
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    stream=sys.stdout,
+    force=True,  # Override any existing configuration
+)
 
 logger = getLogger(__name__)
 
@@ -57,7 +68,116 @@ def get_ticket_interface() -> TicketInterface:
     return StandardizedTicketAdapter(ticket_impl, reporter=reporter)
 
 
-def process_message(  # noqa: C901, PLR0912, PLR0915
+def _handle_create_ticket(params: dict[str, str], ticket_interface: TicketInterface) -> str:
+    """Handle create_ticket operation."""
+    title = params.get("title", "").strip()
+    description = params.get("description", "").strip()
+    if not title:
+        msg = f"create_ticket requires title. Got title='{title}'"
+        raise ValueError(msg)
+    if not description:
+        description = f"Ticket created for: {title}"
+    logger.info("Creating ticket with title: %s, description: %s", title, description)
+    assignee_val = params.get("assignee", "").strip()
+    ticket = ticket_interface.create_ticket(
+        title=title,
+        description=description,
+        assignee=assignee_val if assignee_val else None,
+    )
+    logger.info("✅ Ticket created! ID: %s, Title: %s, Status: %s", ticket.id, ticket.title, ticket.status)
+    return f"✅ Ticket created!\n**ID**: {ticket.id}\n**Title**: {ticket.title}\n**Status**: {ticket.status}"
+
+
+def _handle_get_ticket(params: dict[str, str], ticket_interface: TicketInterface) -> str:
+    """Handle get_ticket operation."""
+    ticket_id_val = params.get("ticket_id", "").strip()
+    if not ticket_id_val:
+        msg = "get_ticket requires ticket_id"
+        raise ValueError(msg)
+    ticket_result = ticket_interface.get_ticket(ticket_id=ticket_id_val)
+    if ticket_result is None:
+        msg = f"Ticket {ticket_id_val} not found"
+        raise ValueError(msg)
+    ticket = ticket_result
+    return f"📋 **{ticket.title}**\n**ID**: {ticket.id}\n**Status**: {ticket.status}\n**Description**: {ticket.description}"
+
+
+def _handle_search_tickets(params: dict[str, str], ticket_interface: TicketInterface) -> str:
+    """Handle search_tickets operation."""
+    ticket_status: TicketStatus | None = None
+    status_val = params.get("status", "").strip()
+    if status_val:
+        ticket_status = TicketStatus(status_val)
+    query_val = params.get("query", "").strip()
+    tickets = ticket_interface.search_tickets(
+        query=query_val if query_val else None,
+        status=ticket_status,
+    )
+    if not tickets:
+        return "🔍 No tickets found."
+    tickets_list = "\n".join(f"• **{t.id}**: {t.title} ({t.status})" for t in tickets[:10])
+    return f"🔍 Found {len(tickets)} ticket(s):\n{tickets_list}"
+
+
+def _handle_update_ticket(params: dict[str, str], ticket_interface: TicketInterface) -> str:
+    """Handle update_ticket operation."""
+    ticket_id_val = params.get("ticket_id", "").strip()
+    if not ticket_id_val:
+        msg = "update_ticket requires ticket_id"
+        raise ValueError(msg)
+    update_status: TicketStatus | None = None
+    status_val = params.get("status", "").strip()
+    if status_val:
+        update_status = TicketStatus(status_val)
+    title_val = params.get("title", "").strip()
+    ticket = ticket_interface.update_ticket(
+        ticket_id=ticket_id_val,
+        status=update_status,
+        title=title_val if title_val else None,
+    )
+    return f"✅ Ticket updated!\n**ID**: {ticket.id}\n**Title**: {ticket.title}\n**Status**: {ticket.status}"
+
+
+def _find_ticket_id_for_deletion(params: dict[str, str], ticket_interface: TicketInterface) -> str:
+    """Find ticket ID for deletion by searching if ticket_id not provided."""
+    title_val = params.get("title", "").strip()
+    description_val = params.get("description", "").strip()
+    if title_val:
+        query_val = title_val
+        search_type = "title"
+    elif description_val:
+        query_val = description_val
+        search_type = "description"
+    else:
+        msg = "delete_ticket requires ticket_id or a search query (title/description)"
+        raise ValueError(msg)
+    logger.info("Searching for tickets by %s: %s", search_type, query_val)
+    search_results = ticket_interface.search_tickets(query=query_val)
+    if not search_results:
+        msg = f"No tickets found matching {search_type} '{query_val}'"
+        raise ValueError(msg)
+    if len(search_results) > 1:
+        tickets_list = "\n".join(f"• **{t.id}**: {t.title}" for t in search_results)
+        msg = (
+            f"Multiple tickets found matching {search_type} '{query_val}'. "
+            f"Please specify the ticket ID:\n{tickets_list}"
+        )
+        raise ValueError(msg)
+    ticket_id_val = search_results[0].id
+    logger.info("Found ticket to delete by %s: %s - %s", search_type, ticket_id_val, search_results[0].title)
+    return ticket_id_val
+
+
+def _handle_delete_ticket(params: dict[str, str], ticket_interface: TicketInterface) -> str:
+    """Handle delete_ticket operation."""
+    ticket_id_val = params.get("ticket_id", "").strip()
+    if not ticket_id_val:
+        ticket_id_val = _find_ticket_id_for_deletion(params, ticket_interface)
+    success = ticket_interface.delete_ticket(ticket_id=ticket_id_val)
+    return "✅ Ticket deleted successfully!" if success else "❌ Failed to delete ticket"
+
+
+def process_message(
     user_input: str,
     channel_id: str,
     ai_interface: AIInterface,
@@ -152,127 +272,15 @@ the "title" parameter. The system will search for tickets matching that title.""
     # Step 2: Execute the appropriate TicketInterface method
     try:
         if method == "create_ticket":
-            # Extract title and description - handle empty strings
-            title = params.get("title", "").strip()
-            description = params.get("description", "").strip()
-            if not title:
-                msg = f"create_ticket requires title. Got title='{title}'"
-                raise ValueError(msg)  # noqa: TRY301
-            # Auto-generate description from title if not provided
-            if not description:
-                description = f"Ticket created for: {title}"
-            logger.info("Creating ticket with title: %s, description: %s", title, description)
-            assignee_val = params.get("assignee", "").strip()
-            ticket = ticket_interface.create_ticket(
-                title=title,
-                description=description,
-                assignee=assignee_val if assignee_val else None,
-            )
-            logger.info("✅ Ticket created! ID: %s, Title: %s, Status: %s", ticket.id, ticket.title, ticket.status)
-            response = (
-                f"✅ Ticket created!\n**ID**: {ticket.id}\n**Title**: {ticket.title}\n"
-                f"**Status**: {ticket.status}"
-            )
-
+            response = _handle_create_ticket(params, ticket_interface)
         elif method == "get_ticket":
-            ticket_id_val = params.get("ticket_id", "").strip()
-            if not ticket_id_val:
-                msg = "get_ticket requires ticket_id"
-                raise ValueError(msg)  # noqa: TRY301
-            ticket_result = ticket_interface.get_ticket(ticket_id=ticket_id_val)
-            if ticket_result is None:
-                msg = f"Ticket {ticket_id_val} not found"
-                raise ValueError(msg)  # noqa: TRY301
-            # At this point, mypy knows ticket_result is not None
-            ticket = ticket_result
-            response = (
-                f"📋 **{ticket.title}**\n**ID**: {ticket.id}\n**Status**: {ticket.status}\n"
-                f"**Description**: {ticket.description}"
-            )
-
+            response = _handle_get_ticket(params, ticket_interface)
         elif method == "search_tickets":
-            ticket_status: TicketStatus | None = None
-            status_val = params.get("status", "").strip()
-            if status_val:
-                ticket_status = TicketStatus(status_val)
-            query_val = params.get("query", "").strip()
-            tickets = ticket_interface.search_tickets(
-                query=query_val if query_val else None,
-                status=ticket_status,
-            )
-            if not tickets:
-                response = "🔍 No tickets found."
-            else:
-                tickets_list = "\n".join(f"• **{t.id}**: {t.title} ({t.status})" for t in tickets[:10])
-                response = f"🔍 Found {len(tickets)} ticket(s):\n{tickets_list}"
-
+            response = _handle_search_tickets(params, ticket_interface)
         elif method == "update_ticket":
-            ticket_id_val = params.get("ticket_id", "").strip()
-            if not ticket_id_val:
-                msg = "update_ticket requires ticket_id"
-                raise ValueError(msg)  # noqa: TRY301
-            update_status: TicketStatus | None = None
-            status_val = params.get("status", "").strip()
-            if status_val:
-                update_status = TicketStatus(status_val)
-            title_val = params.get("title", "").strip()
-            ticket = ticket_interface.update_ticket(
-                ticket_id=ticket_id_val,
-                status=update_status,
-                title=title_val if title_val else None,
-            )
-            response = (
-                f"✅ Ticket updated!\n**ID**: {ticket.id}\n**Title**: {ticket.title}\n"
-                f"**Status**: {ticket.status}"
-            )
-
+            response = _handle_update_ticket(params, ticket_interface)
         elif method == "delete_ticket":
-            ticket_id_val = params.get("ticket_id", "").strip()
-
-            # If no ticket_id provided, search for tickets by title (preferred) or description
-            if not ticket_id_val:
-                title_val = params.get("title", "").strip()
-                description_val = params.get("description", "").strip()
-
-                # Prioritize title over description
-                if title_val:
-                    query_val = title_val
-                    search_type = "title"
-                elif description_val:
-                    query_val = description_val
-                    search_type = "description"
-                else:
-                    msg = "delete_ticket requires ticket_id or a search query (title/description)"
-                    raise ValueError(msg)  # noqa: TRY301
-
-                # Search for tickets matching the query
-                logger.info("Searching for tickets by %s: %s", search_type, query_val)
-                search_results = ticket_interface.search_tickets(query=query_val)
-
-                if not search_results:
-                    msg = f"No tickets found matching {search_type} '{query_val}'"
-                    raise ValueError(msg)  # noqa: TRY301
-
-                if len(search_results) > 1:
-                    tickets_list = "\n".join(f"• **{t.id}**: {t.title}" for t in search_results)
-                    msg = (
-                        f"Multiple tickets found matching {search_type} '{query_val}'. "
-                        f"Please specify the ticket ID:\n{tickets_list}"
-                    )
-                    raise ValueError(msg)  # noqa: TRY301
-
-                # Exactly one ticket found, use its ID
-                ticket_id_val = search_results[0].id
-                logger.info(
-                    "Found ticket to delete by %s: %s - %s",
-                    search_type,
-                    ticket_id_val,
-                    search_results[0].title,
-                )
-
-            success = ticket_interface.delete_ticket(ticket_id=ticket_id_val)
-            response = "✅ Ticket deleted successfully!" if success else "❌ Failed to delete ticket"
-
+            response = _handle_delete_ticket(params, ticket_interface)
         else:
             msg = f"Unknown method: {method}"
             raise ValueError(msg)  # noqa: TRY301
@@ -287,7 +295,66 @@ the "title" parameter. The system will search for tickets matching that title.""
     chat_interface.send_message(channel_id=channel_id, content=response)
 
 
-def main() -> None:  # noqa: C901
+def _is_bot_response(user_input: str) -> bool:
+    """Check if user input looks like a bot response."""
+    user_input_lower = user_input.lower()
+    bot_response_patterns = [
+        ":mag:",  # Search emoji
+        ":white_check_mark:",  # Success emoji
+        ":clipboard:",  # Clipboard emoji
+        ":x:",  # Error emoji
+        "**id**:",  # Response format marker (lowercase)
+        "**title**:",  # Response format marker (lowercase)
+        "**status**:",  # Response format marker (lowercase)
+        "**description**:",  # Response format marker (lowercase)
+        "no tickets found",  # Bot response text (lowercase)
+        "ticket created!",  # Bot response text (lowercase)
+        "ticket deleted",  # Bot response text (lowercase)
+        "ticket updated!",  # Bot response text (lowercase)
+        "error:",  # Error messages (lowercase)
+        "failed to",  # Error messages (lowercase)
+        "client error",  # Error messages (lowercase)
+        "httpstatuserror",  # Error messages (lowercase)
+        "for more information check:",  # Error messages (lowercase)
+        "403 forbidden",  # OAuth error
+        "oauth/token",  # OAuth error URL
+    ]
+    return any(pattern in user_input_lower for pattern in bot_response_patterns)
+
+
+def _should_skip_message(user_input: str) -> bool:
+    """Check if message should be skipped."""
+    if not user_input:
+        return True
+    if "has joined the channel" in user_input or "has left the channel" in user_input:
+        return True
+    return _is_bot_response(user_input)
+
+
+def _filter_messages_by_timestamp(messages: list, script_start_time: float) -> list:  # type: ignore[type-arg]
+    """Filter messages to only include those sent after script start time."""
+    filtered_messages = []
+    logger.debug("Checking %d messages against start time %s", len(messages), script_start_time)
+    for message in messages:
+        try:
+            if hasattr(message, "_slack_message") and hasattr(message._slack_message, "ts"):  # noqa: SLF001
+                message_ts = float(message._slack_message.ts)  # noqa: SLF001
+                if message_ts >= script_start_time:
+                    filtered_messages.append(message)
+                    logger.info("Including new message (ts: %s >= start: %s)", message_ts, script_start_time)
+                else:
+                    logger.info("Skipping old message (ts: %s < start: %s)", message_ts, script_start_time)
+            else:
+                logger.warning("Message %s has no timestamp, including it (may be old)", message.id)
+                filtered_messages.append(message)
+        except (AttributeError, ValueError, TypeError) as e:
+            logger.warning("Could not get timestamp for message %s: %s. Including message.", message.id, e)
+            filtered_messages.append(message)
+    logger.debug("Filtered to %d new messages out of %d total", len(filtered_messages), len(messages))
+    return filtered_messages
+
+
+def main() -> None:
     """Run the production-like integration flow.
 
     Polls for messages from the chat interface and processes them.
@@ -310,67 +377,28 @@ def main() -> None:  # noqa: C901
     # Track processed message IDs to avoid duplicates
     processed_message_ids: set[str] = set()
 
+    # Record script start time - only process messages sent after this time
+    script_start_time = time.time()
+    logger.info("Script started at: %s (timestamp: %s)", time.ctime(script_start_time), script_start_time)
+
 
     # Production-like polling loop
     while True:
         try:
             # Poll for new messages from the chat interface
             messages = chat_interface.get_messages(channel_id=channel_id, limit=10)
+            filtered_messages = _filter_messages_by_timestamp(messages, script_start_time)
 
-            # Process new messages (in reverse order to process oldest first)
-            for message in reversed(messages):
+            # Process filtered messages (in reverse order to process oldest first)
+            for message in reversed(filtered_messages):
                 message_id = message.id
-
-                # Skip if we've already processed this message
                 if message_id in processed_message_ids:
                     continue
 
-                # Extract user input from message
                 user_input = message.content.strip()
-
-                # Skip empty messages
-                if not user_input:
+                if _should_skip_message(user_input):
                     processed_message_ids.add(message_id)
                     continue
-
-                # Skip system messages (e.g., "has joined the channel")
-                if "has joined the channel" in user_input or "has left the channel" in user_input:
-                    processed_message_ids.add(message_id)
-                    continue
-
-                # Skip messages that look like bot responses (contain emoji patterns or response markers)
-                # Convert to lowercase for case-insensitive matching
-                user_input_lower = user_input.lower()
-
-                bot_response_patterns = [
-                    ":mag:",  # Search emoji
-                    ":white_check_mark:",  # Success emoji
-                    ":clipboard:",  # Clipboard emoji
-                    ":x:",  # Error emoji
-                    "**id**:",  # Response format marker (lowercase)
-                    "**title**:",  # Response format marker (lowercase)
-                    "**status**:",  # Response format marker (lowercase)
-                    "**description**:",  # Response format marker (lowercase)
-                    "no tickets found",  # Bot response text (lowercase)
-                    "ticket created!",  # Bot response text (lowercase)
-                    "ticket deleted",  # Bot response text (lowercase)
-                    "ticket updated!",  # Bot response text (lowercase)
-                    "error:",  # Error messages (lowercase)
-                    "failed to",  # Error messages (lowercase)
-                    "client error",  # Error messages (lowercase)
-                    "httpstatuserror",  # Error messages (lowercase)
-                    "for more information check:",  # Error messages (lowercase)
-                    "403 forbidden",  # OAuth error
-                    "oauth/token",  # OAuth error URL
-                ]
-
-                if any(pattern in user_input_lower for pattern in bot_response_patterns):
-                    processed_message_ids.add(message_id)
-                    continue
-
-                # Skip messages that are responses from the bot itself
-                # (In production, you'd check sender_id against bot user ID)
-                # For now, we rely on pattern matching above
 
                 logger.info("[%s] New message from user: %s", message_id, user_input)
                 logger.info("-" * 50)

@@ -32,6 +32,7 @@ token.json
 .env
 credentials.json
 .fernet_key
+jira_tokens.db
 
 .coverage*
 coverage.xml
@@ -41,4 +42,4 @@ TESTING_STATUS.md
 .DS_Store
 
 
-.data
+
