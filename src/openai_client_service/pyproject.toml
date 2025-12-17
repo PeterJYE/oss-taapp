@@ -14,10 +14,14 @@ dependencies = [
   "pydantic>=2",
   "python-dotenv",
   "openai-client-impl",
+  "openai>=1.40.0",
+  "ai-api",
+  "prometheus-client>=0.20.0",
 ]
 
 [tool.uv.sources]
 openai-client-impl = { workspace = true }
+ai-api = { workspace = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/openai_client_service"]

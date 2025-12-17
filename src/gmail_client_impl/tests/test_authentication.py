@@ -9,10 +9,9 @@ from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+from gmail_client_impl import GmailClient
 from google.auth.exceptions import RefreshError
 from google.oauth2.credentials import Credentials
-
-from gmail_client_impl.gmail_impl import GmailClient
 
 
 class TestGmailClientAuthentication:

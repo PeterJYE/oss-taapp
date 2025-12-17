@@ -2,11 +2,11 @@
 
 import importlib
 
-import mail_client_api
 import pytest
-from mail_client_api import message as message_protocol
 
 import gmail_client_impl
+import mail_client_api
+from mail_client_api import message as message_protocol
 
 
 def test_register_binds_factories(monkeypatch: pytest.MonkeyPatch) -> None:

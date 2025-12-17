@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ticket-impl"
+version = "0.1.0"
+description = "Jira-backed implementation of ticket_api"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "ticket-api",
+  "httpx>=0.27",
+  "pydantic>=2",
+  "sqlalchemy>=2",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ticket_impl"]
+
+[dependency-groups]
+dev = [
+    "anyio>=4.11.0",
+    "mypy>=1.18.2",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "respx>=0.22.0",
+    "ruff>=0.13.2",
+    "types-requests>=2.32.4.20250913",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "pytest-asyncio>=0.23",
+  "respx>=0.21",
+  "anyio>=4",
+  "ruff",
+  "mypy",
+  "types-requests"
+]

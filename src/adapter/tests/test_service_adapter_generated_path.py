@@ -20,6 +20,7 @@ from generated_client.mail_client_service_client.models.message_summary import M
 
 API_DEFAULT = import_module("generated_client.mail_client_service_client.api.default")
 
+
 @pytest.mark.unit
 def test_generated_client_code_paths(monkeypatch: pytest.MonkeyPatch) -> None:
     """Ensure the adapter uses generated-client helpers when no `messages` API is present."""
@@ -141,6 +142,7 @@ def test_initializes_test_client(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.unit
 def test_messages_api_typeerror_retry(monkeypatch: pytest.MonkeyPatch) -> None:
     """Ensure we retry generated client helpers using alias mappings."""
+
     class FlakyMessages:
         """Simulate generated client endpoints with multiple calling conventions."""
 
@@ -199,6 +201,7 @@ def test_messages_api_typeerror_retry(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.unit
 def test_call_generated_aliases_and_failures() -> None:
     """Ensure `_call_generated` handles alias expansion and passthrough errors."""
+
     def accepts_aliases(*, _client: str, _limit: int, _message_id: str) -> tuple[str, int, str]:
         return _client, _limit, _message_id
 
@@ -231,4 +234,3 @@ def test_instantiate_generated_client_attempts() -> None:
 
     with pytest.raises(TypeError):
         _instantiate_generated_client(factory_fail, "http://x")
-

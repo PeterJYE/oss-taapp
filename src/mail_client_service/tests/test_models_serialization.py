@@ -54,4 +54,3 @@ def test_error_response_optional_detail() -> None:
     """Optional detail should remain None."""
     err = models.ErrorResponse(error="Failure", detail=None)
     assert err.detail is None
-

@@ -1,3 +1,103 @@
+# OSS TA App - Integrated Chat-AI-Ticket System
+
+A multi-service application integrating Chat (Slack), AI (OpenAI), and Ticket (JIRA) using shared interfaces.
+
+```
+User Message (Slack) → AI Service (OpenAI) → Ticket Service (JIRA) → Response (Slack)
+```
+
+## Quick Start
+
+```bash
+git clone https://github.com/PeterJYE/oss-taapp.git
+cd oss-taapp
+uv sync --all-packages
+```
+
+## Credentials Setup
+
+Create a `.env` file with the following:
+
+| Service | Variable | Description |
+|---------|----------|-------------|
+| **OpenAI** | `OPENAI_API_KEY` | API key from [platform.openai.com](https://platform.openai.com/api-keys) |
+| **Slack** | `CHAT_SERVICE_BASE_URL` | `https://slack.com/api` |
+| | `CHAT_SERVICE_TOKEN` | Bot OAuth token from [api.slack.com/apps](https://api.slack.com/apps) |
+| | `CHAT_CHANNEL_ID` | Channel ID to monitor |
+| **JIRA** | `OAUTH_CLIENT_ID` | From [developer.atlassian.com](https://developer.atlassian.com/console/myapps/) |
+| | `OAUTH_CLIENT_SECRET` | Atlassian OAuth secret |
+| | `OAUTH_REDIRECT_URI` | Callback URL (HTTPS required) |
+| | `JIRA_CLOUD_ID` | From `https://your-domain.atlassian.net/_edge/tenant_info` |
+| | `JIRA_PROJECT_KEY` | Project key (e.g., `TEST`) |
+| | `TICKET_SERVICE_USER_ID` | User ID for ticket operations |
+| | `DB_URL` | `sqlite:////path/to/jira_tokens.db` |
+
+## Running the Full Stack
+
+```bash
+# Terminal 1: AI Service
+uv run uvicorn openai_client_service.main:app --host 0.0.0.0 --port 8000
+
+# Terminal 2: Ticket Service
+uv run uvicorn ticket_service.main:app --host 0.0.0.0 --port 8001
+
+# Terminal 3: Integration (after JIRA OAuth below)
+uv run python integration_main.py
+```
+
+### JIRA OAuth (Required First)
+```bash
+# Start ticket service, then open browser:
+open "http://localhost:8001/api/v1/auth/login?user_id=YOUR_USER_ID"
+# Complete Atlassian login - token saved to DB
+```
+
+## Terraform Deployment (AWS)
+
+### 1. Store Secrets in AWS Parameter Store
+Configure the following parameters in AWS SSM Parameter Store under `/oss-taapp/`:
+- `OPENAI_API_KEY`, `OAUTH_CLIENT_ID`, `OAUTH_CLIENT_SECRET` (SecureString)
+- `JIRA_CLOUD_ID`, `TICKET_SERVICE_USER_ID`, `JIRA_PROJECT_KEY`, `CHAT_CHANNEL_ID` (String)
+- `CHAT_SERVICE_TOKEN` (SecureString)
+
+### 2. Configure and Deploy
+```bash
+cd terraform
+# Edit terraform.tfvars with repo_url, repo_branch, ssh_allowed_cidrs
+terraform init && terraform apply
+```
+
+### 3. Post-Deploy: JIRA OAuth on EC2
+Use ngrok for HTTPS callback, update Atlassian app callback URL, then authenticate.
+
+## Live Deployment URLs
+
+| Service | URL |
+|---------|-----|
+| AI Service | http://18.207.168.236:8000/docs |
+| AI Health | http://18.207.168.236:8000/health |
+| Metrics | http://18.207.168.236:8000/metrics |
+| Ticket Service | http://18.207.168.236:8001/docs |
+| Prometheus | http://18.207.168.236:9090 |
+| Grafana | http://18.207.168.236:3000 |
+
+## Testing
+
+```bash
+uv run pytest                              # All tests
+uv run pytest src/                         # Unit tests
+uv run pytest tests/integration/ -m integration  # Integration
+uv run pytest tests/e2e/ -m e2e            # E2E
+```
+
+## Observability
+
+- **Metrics**: `http://<host>:8000/metrics`
+- **Health**: `http://<host>:8000/health`
+- **Logs**: CloudWatch `/aws/ec2/oss-taapp`
+
+---
+
 # OpenAI Client Service
 
 A FastAPI-based service that provides a secure, multi-user interface to OpenAI's API with conversation management and encrypted API key storage.
@@ -59,7 +159,7 @@ docker run -p 8000:8000 openai-client-service
 - `POST /auth/set-openai-key` - Store OpenAI API key for a user
 
 ### AI Operations
-- `POST /ai/generate-response` - Generate AI response
+- `POST /ai/generate_response` - Generate AI response
 - `POST /ai/conversations` - Create new conversation
 - `GET /ai/conversations/{conversation_id}` - Get conversation
 - `DELETE /ai/conversations/{conversation_id}` - Delete conversation
@@ -92,7 +192,7 @@ curl -X POST http://localhost:8000/ai/conversations \
 
 ### 4. Generate Response
 ```bash
-curl -X POST http://localhost:8000/ai/generate-response \
+curl -X POST http://localhost:8000/ai/generate_response \
   -H "Content-Type: application/json" \
   --cookie "session_id=YOUR_SESSION_ID" \
   -d '{

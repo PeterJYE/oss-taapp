@@ -106,4 +106,3 @@ def test_delete_message_failure() -> None:
     with pytest.raises(HTTPException) as exc:
         main.delete_message(message_id="m1", client=DummyClient(should_fail=True))
     assert exc.value.status_code == STATUS_BAD_REQUEST
-

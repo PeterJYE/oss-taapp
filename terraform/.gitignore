@@ -1,0 +1,17 @@
+# Terraform files
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+.terraform.lock.hcl
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform plan output files (markdown) - created during planning
+plan*.md
+terraform*.md
+*.plan.md
+

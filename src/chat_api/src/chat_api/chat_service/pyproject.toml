@@ -1,0 +1,45 @@
+[project]
+name = "chat-service"
+version = "0.1.0"
+description = "FastAPI Chat service"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115.0",
+  "pydantic>=2.7.0",
+  "typing-extensions>=4.9.0",
+  # Needed by Starlette's SessionMiddleware
+  "itsdangerous>=2.1,<3.0",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# ✅ Tell setuptools we use a src/ layout and which packages to include
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["chat_service*"]
+
+# ✅ Ruff: move rules under `lint.*`
+# [tool.ruff]
+# line-length = 100
+# target-version = "py312"
+
+# [tool.ruff.lint]
+# select = ["E", "F", "I", "UP"]
+# ignore = []
+
+# [tool.mypy]
+# python_version = "3.12"
+# strict = true
+# warn_unused_configs = true
+# If you ever need to, you can toggle:
+# ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]

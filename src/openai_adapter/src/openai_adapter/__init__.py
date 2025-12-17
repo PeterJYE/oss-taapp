@@ -9,5 +9,8 @@ from ._adapter import (
     AdapterAPIError as AdapterAPIError,
 )
 from ._adapter import (
+    AIAdapter as AIAdapter,
+)
+from ._adapter import (
     OpenAIServiceAdapter as OpenAIServiceAdapter,
 )
